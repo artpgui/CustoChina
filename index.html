@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[DEV] CustoChina — Simulador de Importação China → Brasil</title>
+<meta name="description" content="Calcule tributos, gere relatório PDF e otimize custos de importação da China para o Brasil.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--red:#C0392B;--red-dark:#922B21;--red-light:#FADBD8;--gold:#D4AC0D;--gold-light:#FEF9E7;--ink:#1A1A1A;--ink-mid:#4A4A4A;--ink-soft:#888;--surface:#FAFAF8;--white:#FFFFFF;--border:rgba(0,0,0,0.08);--border-strong:rgba(0,0,0,0.15);--radius:12px;--radius-sm:8px;--green:#1A7A4A;--green-light:#E8F5EE;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink);line-height:1.6;overflow-x:hidden;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(250,250,248,0.93);backdrop-filter:blur(12px);border-bottom:0.5px solid var(--border);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;}
+.nav-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--red);letter-spacing:-0.5px;}
+.nav-logo span{color:var(--gold);}
+.nav-right{display:flex;align-items:center;gap:12px;}
+.nav-author{font-size:13px;color:var(--ink-soft);}
+.nav-cta{background:var(--red);color:#fff;border:none;border-radius:999px;padding:8px 20px;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;font-family:'DM Sans',sans-serif;transition:background 0.2s;}
+.nav-cta:hover{background:var(--red-dark);}
+
+.sim-credits{display:flex;align-items:center;gap:6px;background:#E8F5EE;border-radius:999px;padding:4px 12px;font-size:12px;color:#1A7A4A;font-weight:500;border:0.5px solid #8fcfad;}
+.sim-credits-used{background:#FADBD8;color:#C0392B;border-color:#f5c6c0;}
+.nav-btn-trial{display:inline-flex;align-items:center;gap:5px;background:var(--red);color:#fff;border:none;border-radius:999px;padding:7px 16px;font-size:12px;font-weight:500;cursor:pointer;text-decoration:none;font-family:'DM Sans',sans-serif;transition:background 0.2s;}
+.nav-btn-trial:hover{background:var(--red-dark);}
+.nav-btn-outline{display:inline-flex;align-items:center;gap:5px;background:transparent;color:var(--ink);border:0.5px solid var(--border-strong);border-radius:999px;padding:7px 16px;font-size:12px;font-weight:500;cursor:pointer;text-decoration:none;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.nav-btn-outline:hover{background:var(--surface);border-color:var(--ink);}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;padding:80px 2rem 4rem;position:relative;overflow:hidden;}
+.hero-bg{position:absolute;inset:0;z-index:0;background:linear-gradient(135deg,#fff 0%,#fdf5f5 50%,#fffdf0 100%);}
+.hero-pattern{position:absolute;inset:0;z-index:0;opacity:0.035;background-image:repeating-linear-gradient(0deg,var(--ink) 0px,transparent 1px,transparent 40px),repeating-linear-gradient(90deg,var(--ink) 0px,transparent 1px,transparent 40px);}
+.hero-inner{position:relative;z-index:1;max-width:1140px;margin:0 auto;width:100%;display:grid;grid-template-columns:1fr 1.1fr;gap:3.5rem;align-items:start;padding-top:1rem;}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;background:var(--red-light);color:var(--red-dark);border-radius:999px;padding:5px 14px;font-size:12px;font-weight:500;margin-bottom:1.25rem;}
+.hero-tag::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--red);display:block;}
+h1{font-family:'Syne',sans-serif;font-size:clamp(32px,3.5vw,50px);font-weight:800;line-height:1.05;letter-spacing:-1.5px;color:var(--ink);margin-bottom:1rem;}
+h1 em{font-style:normal;color:var(--red);}
+.hero-sub{font-size:16px;color:var(--ink-mid);line-height:1.65;margin-bottom:1.5rem;font-weight:300;}
+.hero-stats{display:flex;gap:1.75rem;margin-bottom:1.75rem;flex-wrap:wrap;}
+.stat-num{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;color:var(--ink);}
+.stat-label{font-size:11px;color:var(--ink-soft);}
+.author-card{display:inline-flex;align-items:center;gap:10px;background:var(--white);border:0.5px solid var(--border-strong);border-radius:999px;padding:6px 14px 6px 6px;text-decoration:none;transition:border-color 0.2s;}
+.author-card:hover{border-color:var(--red);}
+.author-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#C0392B,#D4AC0D);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:12px;color:#fff;flex-shrink:0;}
+.author-name{font-size:13px;font-weight:500;color:var(--ink);}
+.author-sub{font-size:11px;color:var(--ink-soft);}
+
+/* MAIN CARD */
+.hero-card{background:var(--white);border-radius:18px;border:0.5px solid var(--border-strong);padding:1.5rem;box-shadow:0 16px 50px rgba(0,0,0,0.07);}
+.card-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--ink-soft);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;}
+.live-dot{display:flex;align-items:center;gap:5px;font-size:11px;color:#27AE60;font-weight:400;text-transform:none;letter-spacing:0;}
+.live-dot::before{content:'';width:6px;height:6px;border-radius:50%;background:#27AE60;display:block;animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.35}}
+
+/* FORM ELEMENTS */
+.form-group{margin-bottom:9px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
+.lbl{font-size:11px;color:var(--ink-soft);margin-bottom:3px;font-weight:500;display:flex;align-items:center;gap:5px;}
+.lbl-tip{font-size:10px;color:#fff;background:var(--ink-soft);border-radius:3px;padding:1px 5px;cursor:help;}
+.inp{width:100%;height:35px;padding:0 10px;border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);font-size:13px;font-family:'DM Sans',sans-serif;color:var(--ink);background:var(--surface);transition:border-color 0.15s;}
+.inp:focus{outline:none;border-color:var(--red);}
+.inp.ai-filled{border-color:#1A7A4A;background:#f0faf5;}
+.sel{width:100%;height:35px;padding:0 10px;border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);font-size:12px;font-family:'DM Sans',sans-serif;color:var(--ink);background:var(--surface);}
+.sel:focus{outline:none;border-color:var(--red);}
+.small-note{font-size:10px;color:var(--ink-soft);margin-top:2px;font-style:italic;}
+
+/* NCM PREDICTOR */
+.ncm-predict-btn{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:var(--red);background:var(--red-light);border:none;border-radius:999px;padding:3px 10px;cursor:pointer;margin-left:6px;font-family:'DM Sans',sans-serif;}
+.ncm-predict-btn:hover{background:#f5c6c0;}
+.ncm-suggestions{background:var(--white);border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);margin-top:4px;overflow:hidden;display:none;}
+.ncm-sug-item{padding:8px 10px;cursor:pointer;border-bottom:0.5px solid var(--border);font-size:12px;transition:background 0.1s;}
+.ncm-sug-item:last-child{border:none;}
+.ncm-sug-item:hover{background:var(--surface);}
+.ncm-sug-code{font-family:'Syne',sans-serif;font-weight:700;color:var(--red);margin-right:6px;}
+.ncm-sug-rate{font-size:10px;color:var(--ink-soft);float:right;}
+
+/* CONTAINER TOGGLE */
+.toggle-row{display:grid;grid-template-columns:1fr 1fr;border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:4px;}
+.tog-btn{padding:7px 6px;background:var(--surface);border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;color:var(--ink-soft);transition:all 0.15s;text-align:center;}
+.tog-btn.active{background:var(--ink);color:#fff;}
+.tog-btn:first-child{border-right:0.5px solid var(--border-strong);}
+.container-desc{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:7px 10px;font-size:11px;color:var(--ink-mid);line-height:1.45;}
+
+/* PROFORMA UPLOAD */
+.upload-zone{border:1.5px dashed var(--border-strong);border-radius:var(--radius-sm);padding:12px;text-align:center;cursor:pointer;transition:border-color 0.2s,background 0.2s;background:var(--surface);}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--red);background:#fef9f9;}
+.upload-zone.loaded{border-color:var(--green);border-style:solid;background:var(--green-light);}
+.upload-icon{font-size:20px;margin-bottom:4px;}
+.upload-text{font-size:12px;color:var(--ink-soft);}
+.upload-text strong{color:var(--ink);}
+.upload-result{display:none;margin-top:8px;}
+.upload-field{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:0.5px solid var(--border);font-size:11px;}
+.upload-field:last-child{border:none;}
+.upload-field-key{color:var(--ink-soft);font-weight:500;}
+.upload-field-val{color:var(--ink);font-weight:500;text-align:right;max-width:55%;}
+.ai-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:600;padding:2px 6px;border-radius:999px;background:var(--green-light);color:var(--green);}
+
+/* CALC BTN */
+.btn-calc{width:100%;height:42px;background:var(--red);color:#fff;border:none;border-radius:var(--radius-sm);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.03em;cursor:pointer;margin-top:8px;transition:background 0.2s,transform 0.1s;}
+.btn-calc:hover{background:var(--red-dark);}
+.btn-calc:active{transform:scale(0.99);}
+.btn-calc:disabled{background:#ccc;cursor:default;}
+
+/* RESULTS */
+.res-summary{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px;}
+.res-card{background:var(--surface);border-radius:var(--radius-sm);padding:8px 10px;border:0.5px solid var(--border);}
+.res-lbl{font-size:10px;color:var(--ink-soft);font-weight:500;text-transform:uppercase;letter-spacing:0.04em;}
+.res-val{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--ink);}
+.res-total-box{background:var(--ink);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;}
+.res-total-box .res-lbl{color:rgba(255,255,255,0.5);}
+.res-total-box .res-val{color:#fff;font-size:19px;}
+.res-total-box .res-sub{color:var(--gold);font-size:11px;margin-top:2px;}
+.tax-table{border-top:0.5px solid var(--border);padding-top:6px;margin-bottom:6px;}
+.tax-row-r{display:flex;justify-content:space-between;font-size:11px;padding:3px 0;border-bottom:0.5px solid var(--border);color:var(--ink-mid);}
+.tax-row-r:last-child{border:none;}
+.tax-row-r strong{color:var(--ink);font-weight:500;}
+
+/* INSIGHTS */
+.insights-panel{margin-top:8px;}
+.insight-item{display:flex;gap:8px;padding:8px 10px;border-radius:var(--radius-sm);margin-bottom:6px;font-size:11px;line-height:1.5;}
+.insight-item.green{background:var(--green-light);border-left:2px solid var(--green);}
+.insight-item.gold{background:var(--gold-light);border-left:2px solid var(--gold);}
+.insight-item.red{background:var(--red-light);border-left:2px solid var(--red);}
+.insight-icon{font-size:14px;flex-shrink:0;margin-top:1px;}
+.insight-text{color:var(--ink-mid);}
+.insight-text strong{color:var(--ink);display:block;margin-bottom:2px;}
+
+/* ACTION BTNS */
+.btn-pdf{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;height:38px;background:var(--ink);color:#fff;border:none;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;margin-top:7px;font-family:'DM Sans',sans-serif;transition:background 0.2s;}
+.btn-pdf:hover{background:#333;}
+.btn-li{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;height:36px;background:#0A66C2;color:#fff;border:none;border-radius:var(--radius-sm);font-size:12px;font-weight:500;cursor:pointer;margin-top:5px;text-decoration:none;font-family:'DM Sans',sans-serif;}
+.btn-li:hover{background:#084f99;}
+
+/* SPINNER */
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:rot 0.7s linear infinite;vertical-align:middle;margin-right:5px;}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* SECTIONS */
+.section{padding:5rem 2rem;}
+.sec-inner{max-width:1100px;margin:0 auto;}
+.sec-label{font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);margin-bottom:0.6rem;}
+h2{font-family:'Syne',sans-serif;font-size:clamp(24px,2.8vw,38px);font-weight:800;letter-spacing:-1px;line-height:1.1;color:var(--ink);margin-bottom:0.75rem;}
+
+/* CONTAINER SECTION */
+.cont-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-top:2rem;}
+.cont-card{border-radius:var(--radius);padding:1.25rem;border:0.5px solid var(--border);}
+.cont-card.fcl{background:linear-gradient(135deg,#fff,#fdf5f5);border-color:#FADBD8;}
+.cont-card.lcl{background:linear-gradient(135deg,#fff,#fffdf0);border-color:#FDEBD0;}
+.cont-badge{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;}
+.fcl .cont-badge{color:var(--red);}
+.lcl .cont-badge{color:var(--gold);}
+.cont-card h3{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:3px;}
+.cont-detail{margin-top:0.6rem;}
+.cont-row{display:flex;gap:8px;padding:4px 0;border-bottom:0.5px solid var(--border);font-size:12px;}
+.cont-row:last-child{border:none;}
+.cont-key{color:var(--ink-soft);min-width:105px;}
+.cont-val{color:var(--ink);font-weight:500;}
+.when-badge{display:inline-block;margin-top:8px;font-size:11px;font-weight:500;padding:3px 10px;border-radius:999px;}
+.fcl .when-badge{background:var(--red-light);color:var(--red-dark);}
+.lcl .when-badge{background:#FDEBD0;color:#784212;}
+
+/* FRETE */
+.frete-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:2rem;}
+.frete-stat{background:var(--white);border:0.5px solid var(--border);border-radius:var(--radius);padding:1rem;}
+.fs-lbl{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px;}
+.fs-val{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--ink);margin-bottom:2px;}
+.fs-sub{font-size:11px;color:var(--ink-soft);}
+.chart-wrap{background:var(--white);border:0.5px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-top:1rem;}
+.chart-wrap h3{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:1rem;}
+.c-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.c-lbl{font-size:11px;color:var(--ink-soft);min-width:72px;}
+.c-bar-wrap{flex:1;background:var(--surface);border-radius:3px;height:17px;overflow:hidden;}
+.c-bar{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:6px;}
+.c-bar span{font-size:10px;font-weight:600;color:#fff;white-space:nowrap;}
+.chart-note{font-size:10px;color:var(--ink-soft);margin-top:0.75rem;line-height:1.5;}
+.chart-note a{color:var(--red);text-decoration:none;}
+.frete-warn{background:#FEF9E7;border:0.5px solid #F0CA4A;border-radius:var(--radius-sm);padding:9px 12px;font-size:12px;color:#7D6608;margin-top:0.75rem;line-height:1.6;}
+.frete-margin-note{background:var(--green-light);border:0.5px solid #8fcfad;border-radius:var(--radius-sm);padding:9px 12px;font-size:12px;color:var(--green);margin-top:0.5rem;line-height:1.6;}
+
+/* TRIBUTOS */
+.trib-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:2rem;}
+.trib-card{background:var(--white);border:0.5px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.25rem;}
+.trib-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 9px;border-radius:999px;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.04em;}
+.federal{background:#EBF5FB;color:#1A5276;}
+.estadual{background:#FEF9E7;color:#7D6608;}
+.trib-card h3{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:3px;}
+.trib-card p{font-size:12px;color:var(--ink-soft);line-height:1.45;}
+.trib-rate{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;color:var(--red);margin-top:6px;}
+
+/* FONTES */
+.fontes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:2rem;}
+.fonte-card{background:var(--white);border:0.5px solid var(--border);border-radius:var(--radius);padding:1.1rem;}
+.fonte-tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;margin-bottom:6px;background:var(--red-light);color:var(--red-dark);}
+.fonte-card h3{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:4px;}
+.fonte-card p{font-size:12px;color:var(--ink-soft);line-height:1.45;}
+.fonte-card a{font-size:11px;color:var(--red);text-decoration:none;display:inline-block;margin-top:4px;}
+
+/* CTA */
+.cta-band{background:var(--ink);color:#fff;padding:4.5rem 2rem;text-align:center;}
+.cta-band h2{color:#fff;margin-bottom:0.75rem;}
+.cta-band p{color:rgba(255,255,255,0.6);font-size:15px;margin-bottom:1.75rem;}
+.btn-cta{display:inline-flex;align-items:center;gap:8px;background:var(--red);color:#fff;border-radius:999px;padding:13px 28px;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;text-decoration:none;transition:background 0.2s;margin-bottom:1rem;}
+.btn-cta:hover{background:var(--red-dark);}
+.cta-author{display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,0.06);border:0.5px solid rgba(255,255,255,0.12);border-radius:999px;padding:7px 16px 7px 7px;text-decoration:none;margin-top:1.25rem;transition:border-color 0.2s;}
+.cta-author:hover{border-color:rgba(255,255,255,0.3);}
+.cta-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#C0392B,#D4AC0D);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:12px;color:#fff;}
+footer{background:var(--ink);border-top:0.5px solid rgba(255,255,255,0.05);padding:1.75rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
+.footer-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;color:#fff;}
+.footer-logo span{color:var(--gold);}
+footer p{font-size:11px;color:rgba(255,255,255,0.3);}
+footer a{color:rgba(255,255,255,0.45);text-decoration:none;font-size:11px;}
+footer a:hover{color:#fff;}
+
+.fade-up{opacity:0;transform:translateY(18px);transition:opacity 0.55s ease,transform 0.55s ease;}
+.fade-up.visible{opacity:1;transform:none;}
+
+
+.plan-card{background:var(--white);border:0.5px solid var(--border);border-radius:var(--radius);padding:1.5rem;display:flex;flex-direction:column;}
+.plan-card.plan-featured{border:2px solid var(--red);}
+.plan-badge{font-size:12px;font-weight:500;color:var(--ink-soft);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;}
+.plan-price{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:var(--ink);line-height:1;}
+.plan-price-sub{font-size:11px;color:var(--ink-soft);margin-top:4px;margin-bottom:1rem;}
+.plan-features{list-style:none;display:flex;flex-direction:column;gap:6px;margin-bottom:1.25rem;flex:1;}
+.plan-features li{font-size:12px;display:flex;align-items:center;gap:6px;}
+.plan-features li::before{content:'';width:14px;height:14px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.plan-features li.ok{color:var(--ink-mid);}
+.plan-features li.ok::before{background:var(--green-light);content:'✓';font-size:9px;font-weight:700;color:var(--green);display:flex;align-items:center;justify-content:center;}
+.plan-features li.no{color:var(--ink-soft);}
+.plan-features li.no::before{background:var(--surface);content:'—';font-size:9px;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;}
+.plan-btn{display:block;text-align:center;padding:10px;border-radius:var(--radius-sm);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;text-decoration:none;transition:all 0.2s;cursor:pointer;}
+.plan-btn-primary{background:var(--red);color:#fff;}
+.plan-btn-primary:hover{background:var(--red-dark);}
+.plan-btn-outline{background:transparent;color:var(--ink);border:0.5px solid var(--border-strong);}
+.plan-btn-outline:hover{background:var(--surface);}
+@media(max-width:800px){.hero-inner{grid-template-columns:1fr;gap:2rem;}.frete-stats,.trib-grid,.fontes-grid{grid-template-columns:1fr 1fr;}.cont-grid{grid-template-columns:1fr;}.nav-author{display:none;}}
+@media(max-width:500px){.form-row{grid-template-columns:1fr;}.frete-stats,.trib-grid,.fontes-grid{grid-template-columns:1fr;}.res-summary{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+
+
+<nav>
+  <div class="nav-logo">Custo<span>China</span></div>
+  <div class="nav-right">
+    <span class="nav-author">by Arthur Guimaraes</span>
+    <div id="nav-credits" style="display:none;"></div>
+    <a href="#isencoes" class="nav-btn-outline" style="display:none;" id="nav-isencoes">Isenções</a>
+    <a href="#planos" class="nav-btn-outline">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      Comprar créditos
+    </a>
+    <a href="#cadastro" class="nav-btn-trial">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      Teste grátis
+    </a>
+  </div>
+</nav>
+
+<div style="background:#1A7A4A;color:#fff;text-align:center;padding:8px;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:500;position:sticky;top:60px;z-index:99;">
+  DEV MODE — Token gate desativado · Simulações ilimitadas · <a href="index.html" style="color:#fff;text-decoration:underline;">Abrir versão produção</a>
+</div>
+<!-- HERO -->
+<section class="hero" id="inicio">
+  <div class="hero-bg"></div><div class="hero-pattern"></div>
+  <div class="hero-inner">
+    <!-- LEFT -->
+    <div>
+      <div class="hero-tag">China → Brasil · Comércio Exterior</div>
+      <h1>Quanto custa <em>importar</em> da China?</h1>
+      <p class="hero-sub">Simule tributos, leia sua Proforma Invoice automaticamente, receba insights de otimização e gere um relatório PDF profissional com cotação do dólar em tempo real.</p>
+      <div class="hero-stats">
+        <div class="stat"><div class="stat-num">7+</div><div class="stat-label">tributos calculados</div></div>
+        <div class="stat"><div class="stat-num">IA</div><div class="stat-label">predição de NCM</div></div>
+        <div class="stat"><div class="stat-num">PDF</div><div class="stat-label">relatório 2 páginas</div></div>
+      </div>
+      <a href="https://www.linkedin.com/in/arthur-guimaraes/" target="_blank" class="author-card">
+        <div class="author-avatar">AG</div>
+        <div><div class="author-name">Arthur Guimaraes</div><div class="author-sub">Connecting Brazil and China</div></div>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="#0A66C2" style="margin-left:4px;flex-shrink:0;"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      </a>
+    </div>
+
+    <!-- SIMULATOR CARD -->
+    <div class="hero-card" id="simulador">
+      <div class="card-title">Simulador de Importação <span class="live-dot">USD ao vivo</span></div>
+
+      <!-- PROFORMA UPLOAD -->
+      <div class="form-group">
+        <div class="lbl">
+          Proforma Invoice / Packing List
+          <span class="lbl-tip" title="Opcional. Carregue o PDF ou imagem e a IA extrai os dados automaticamente.">IA · opcional</span>
+        </div>
+        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="ev.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
+          <div class="upload-icon">📄</div>
+          <div class="upload-text"><strong>Clique ou arraste</strong> para carregar<br>PDF, JPG ou PNG · Proforma ou Packing List</div>
+        </div>
+        <input type="file" id="file-input" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleFileUpload(this.files[0])">
+        <div class="upload-result" id="upload-result"></div>
+      </div>
+
+      <!-- NCM -->
+      <div class="form-group">
+        <div class="lbl">
+          NCM (8 dígitos)
+          <button class="ncm-predict-btn" onclick="predictNCM()" id="btn-predict">✦ Prever com IA</button>
+        </div>
+        <input class="inp" id="ncm" type="text" placeholder="Ex: 84713012" maxlength="10" oninput="onNcm(this.value)">
+        <div id="ncm-hint" style="font-size:11px;color:#C0392B;min-height:12px;margin-top:2px;"></div>
+        <div class="ncm-suggestions" id="ncm-suggestions"></div>
+      </div>
+
+      <div class="form-row">
+        <div>
+          <div class="lbl">Descrição do produto</div>
+          <input class="inp" id="descricao" type="text" placeholder="Ex: Smartphone Android">
+        </div>
+        <div>
+          <div class="lbl">Fornecedor</div>
+          <input class="inp" id="fornecedor" type="text" placeholder="Ex: Shenzhen Tech Co.">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div>
+          <div class="lbl">Valor FOB (USD)</div>
+          <input class="inp" id="fob" type="number" placeholder="5000" min="0" oninput="autoSeguro()">
+        </div>
+        <div>
+          <div class="lbl">
+            Frete intl. (USD)
+            <a href="#frete-section" style="font-size:10px;color:var(--red);text-decoration:none;">médias ↓</a>
+            <span id="frete-label-note" style="display:none;font-size:10px;color:#7D6608;background:#FEF9E7;border-radius:3px;padding:1px 5px;">LCL: informe valor real</span>
+          </div>
+          <input class="inp" id="frete" type="number" placeholder="Ver referências ↓" min="0">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div>
+          <div class="lbl">Seguro (USD) <span class="lbl-tip" title="Calculado automaticamente como 0,4% do FOB. Estimativa de mercado — consulte sua seguradora.">est. 0,4% FOB</span></div>
+          <input class="inp" id="seguro" type="number" placeholder="Auto (0,4% FOB)" min="0" oninput="seguroManual=true">
+          <div class="small-note">* Estimativa 0,4% do FOB · pode editar</div>
+        </div>
+        <div>
+          <div class="lbl">Estado destino (UF)</div>
+          <select class="sel" id="uf">
+            <option value="">Selecione...</option>
+            <option value="SP">SP — ICMS 18%</option><option value="RJ">RJ — ICMS 20%</option>
+            <option value="MG">MG — ICMS 18%</option><option value="RS">RS — ICMS 18%</option>
+            <option value="PR">PR — ICMS 18%</option><option value="SC">SC — ICMS 17%</option>
+            <option value="BA">BA — ICMS 20,5%</option><option value="GO">GO — ICMS 17%</option>
+            <option value="PE">PE — ICMS 20,5%</option><option value="CE">CE — ICMS 20%</option>
+            <option value="MT">MT — ICMS 17%</option><option value="MS">MS — ICMS 17%</option>
+            <option value="AM">AM — ICMS 20%</option><option value="PA">PA — ICMS 17%</option>
+            <option value="ES">ES — ICMS 17%</option><option value="DF">DF — ICMS 18%</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div>
+          <div class="lbl">Modal</div>
+          <select class="sel" id="modal" onchange="onModalChange()">
+            <option value="maritimo">Marítimo</option>
+            <option value="aereo">Aéreo</option>
+          </select>
+        </div>
+        <div>
+          <div class="lbl">Porto / Embarque</div>
+          <input class="inp" id="embarque" type="text" placeholder="Ex: Qingdao">
+        </div>
+      </div>
+
+      <div id="container-block">
+        <div class="lbl" style="margin-bottom:4px;">Tipo de container</div>
+        <div class="toggle-row">
+          <button class="tog-btn active" id="btn-fcl" onclick="setContainer('FCL')">FCL — Container completo</button>
+          <button class="tog-btn" id="btn-lcl" onclick="setContainer('LCL')">LCL — Compartilhado</button>
+        </div>
+        <div class="container-desc" id="cont-desc">
+          <strong>FCL:</strong> Container inteiro exclusivo (20 ou 40 pés). Ideal para cargas acima de ~15 m³. Mais rápido no desembaraço.
+        </div>
+      </div>
+
+      <button class="btn-calc" id="btn-calc" onclick="calcular()">Calcular custo de importação →</button>
+      <div id="results" style="display:none;margin-top:0.75rem;"></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTAINER -->
+<section class="section" style="background:var(--white);">
+  <div class="sec-inner">
+    <div class="sec-label">Tipos de container</div>
+    <h2>FCL ou LCL?</h2>
+    <div class="cont-grid">
+      <div class="cont-card fcl fade-up">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:0.75rem;">
+          <div class="cont-badge">FCL</div>
+          <div><h3>Full Container Load <span style="font-size:11px;font-weight:500;background:#E8F5EE;color:#1A7A4A;border-radius:999px;padding:2px 9px;vertical-align:middle;">✓ Simulação completa</span></h3><div style="font-size:12px;color:var(--ink-soft);">Container completo · exclusivo</div></div>
+        </div>
+        <div class="cont-detail">
+          <div class="cont-row"><span class="cont-key">20 pés (20GP)</span><span class="cont-val">US$ 1.500–4.500 / container</span></div>
+          <div class="cont-row"><span class="cont-key">40 pés (40GP)</span><span class="cont-val">US$ 2.500–5.500 / container</span></div>
+          <div class="cont-row"><span class="cont-key">Capacidade 40GP</span><span class="cont-val">~26 ton · ~67 m³</span></div>
+          <div class="cont-row"><span class="cont-key">Trânsito</span><span class="cont-val">30–45 dias China → Brasil</span></div>
+        </div>
+        <div class="when-badge">✓ Ideal acima de ~15 m³</div>
+      </div>
+      <div class="cont-card lcl fade-up" style="transition-delay:0.1s">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:0.75rem;">
+          <div class="cont-badge">LCL</div>
+          <div><h3>Less than Container Load <span style="font-size:11px;font-weight:500;background:#FEF9E7;color:#7D6608;border-radius:999px;padding:2px 9px;vertical-align:middle;">Frete manual</span></h3><div style="font-size:12px;color:var(--ink-soft);">Compartilhado · cobrado por m³</div></div>
+        </div>
+        <div class="cont-detail">
+          <div class="cont-row"><span class="cont-key">Custo marítimo</span><span class="cont-val">US$ 60–350 por m³</span></div>
+          <div class="cont-row"><span class="cont-key">Por peso</span><span class="cont-val">US$ 1–3 por kg</span></div>
+          <div class="cont-row"><span class="cont-key">Volume ideal</span><span class="cont-val">1 m³ até ~15 m³</span></div>
+          <div class="cont-row"><span class="cont-key">Trânsito</span><span class="cont-val">35–55 dias (+ consolidação)</span></div>
+        </div>
+        <div class="when-badge">✓ Ideal entre 1 m³ e ~15 m³</div>
+        <div style="margin-top:10px;font-size:11px;color:var(--ink-soft);line-height:1.5;padding-top:10px;border-top:0.5px solid var(--border);">O simulador calcula todos os tributos corretamente para LCL — informe o frete real cotado com seu agente de cargas para melhor precisão.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FRETE -->
+<section class="section" id="frete-section">
+  <div class="sec-inner">
+    <div class="sec-label">Referência de mercado</div>
+    <h2>Médias de frete China → Brasil</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;margin-top:0.5rem;">
+      <button onclick="showFreteTab('maritimo')" id="tab-maritimo" style="padding:10px;border-radius:var(--radius-sm);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:0.5px solid var(--border-strong);background:var(--ink);color:#fff;transition:all 0.15s;">
+        Marítimo FCL · Container 40GP
+      </button>
+      <button onclick="showFreteTab('aereo')" id="tab-aereo" style="padding:10px;border-radius:var(--radius-sm);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:0.5px solid var(--border-strong);background:var(--surface);color:var(--ink-mid);transition:all 0.15s;">
+        Aéreo · Por kg (peso taxável)
+      </button>
+    </div>
+    <!-- MARITIMO TAB -->
+    <div id="frete-tab-maritimo">
+      <div class="frete-margin-note">✦ <strong>Margem de segurança:</strong> Os valores sugeridos pelo simulador ficam <strong>10–15% acima da média de mercado</strong> como margem de erro de planejamento. Sempre solicite cotações reais antes de fechar uma operação.</div>
+      <div class="frete-stats">
+        <div class="frete-stat fade-up"><div class="fs-lbl">Mínimo recente (Out/2023)</div><div class="fs-val">US$ 1.342</div><div class="fs-sub">Drewry · piso histórico</div></div>
+        <div class="frete-stat fade-up" style="transition-delay:0.1s"><div class="fs-lbl">Pico (Nov/2024)</div><div class="fs-val">US$ 11.843</div><div class="fs-sub">Logcomex · +214% vs fev/24</div></div>
+        <div class="frete-stat fade-up" style="transition-delay:0.2s"><div class="fs-lbl">Março/2026 (atual)</div><div class="fs-val">US$ 2.520–3.080</div><div class="fs-sub">Sino-Shipping · +75% vs fev/26</div></div>
+      </div>
+      <div class="chart-wrap fade-up">
+        <h3>Evolução do frete 40GP — China → Brasil (2023–2026)</h3>
+        <div class="c-row"><span class="c-lbl">Out/2023</span><div class="c-bar-wrap"><div class="c-bar" style="width:11%;background:#27AE60;"><span>US$ 1.342</span></div></div></div>
+        <div class="c-row"><span class="c-lbl">Jan/2024</span><div class="c-bar-wrap"><div class="c-bar" style="width:21%;background:#2E86C1;"><span>US$ 2.490</span></div></div></div>
+        <div class="c-row"><span class="c-lbl">Abr/2024</span><div class="c-bar-wrap"><div class="c-bar" style="width:57%;background:#D68910;"><span>US$ 6.773</span></div></div></div>
+        <div class="c-row"><span class="c-lbl">Nov/2024</span><div class="c-bar-wrap"><div class="c-bar" style="width:100%;background:#922B21;"><span>US$ 11.843 — pico</span></div></div></div>
+        <div class="c-row"><span class="c-lbl">Mar/2026</span><div class="c-bar-wrap"><div class="c-bar" style="width:24%;background:#1A5276;"><span>US$ 2.520–3.080</span></div></div></div>
+        <div class="chart-note">Fontes: <a href="https://www.drewry.co.uk" target="_blank">Drewry</a> · <a href="https://logcomex.com" target="_blank">Logcomex</a> · <a href="https://bloomberglinea.com.br" target="_blank">Bloomberg Línea</a> · <a href="https://sino-shipping.com" target="_blank">Sino-Shipping</a> · <a href="https://chinagate.com.br" target="_blank">China Gate</a><br>Valores para container 40GP nas rotas Shanghai/Qingdao/Shenzhen → Santos/Paranaguá/Rio. Variam por armador, rota e sazonalidade.</div>
+      </div>
+      <div class="frete-warn">⚠ <strong>Volatilidade atual:</strong> O frete China-Brasil subiu 75–82% entre fevereiro e março de 2026. Use sempre cotações atualizadas de armadores.</div>
+    </div>
+
+    <!-- AEREO TAB -->
+    <div id="frete-tab-aereo" style="display:none;">
+      <div class="frete-margin-note">✦ <strong>Frete aéreo:</strong> Cobrado pelo <strong>peso taxável</strong> — o maior entre o peso real (kg) e o peso cubado (volume cm³ ÷ 6.000). Sempre informe o valor real cotado com seu agente de cargas no simulador.</div>
+
+      <div class="frete-stats">
+        <div class="frete-stat fade-up"><div class="fs-lbl">Cargueiro ≥ 1.000 kg (Mar/2026)</div><div class="fs-val">US$ 9,10/kg</div><div class="fs-sub">Sino-Shipping · queda de 2% vs fev/26</div></div>
+        <div class="frete-stat fade-up" style="transition-delay:0.1s"><div class="fs-lbl">Cargueiro 100–999 kg (2025)</div><div class="fs-val">US$ 6,20–6,50/kg</div><div class="fs-sub">Welltrans · Hongocean</div></div>
+        <div class="frete-stat fade-up" style="transition-delay:0.2s"><div class="fs-lbl">Expresso / Courier (2025)</div><div class="fs-val">US$ 5–10/kg</div><div class="fs-sub">DHL/FedEx/UPS · porta a porta</div></div>
+      </div>
+
+      <div class="chart-wrap fade-up">
+        <h3>Frete aéreo por faixa de peso — China → GRU/Guarulhos</h3>
+        <div class="c-row"><span class="c-lbl" style="min-width:130px;">Expresso &lt;45 kg</span><div class="c-bar-wrap"><div class="c-bar" style="width:100%;background:#922B21;"><span>US$ 8–10/kg · courier porta a porta</span></div></div></div>
+        <div class="c-row"><span class="c-lbl" style="min-width:130px;">Cargueiro 45–300 kg</span><div class="c-bar-wrap"><div class="c-bar" style="width:80%;background:#C0392B;"><span>US$ 7–8,50/kg</span></div></div></div>
+        <div class="c-row"><span class="c-lbl" style="min-width:130px;">Cargueiro 300–999 kg</span><div class="c-bar-wrap"><div class="c-bar" style="width:65%;background:#D68910;"><span>US$ 6,20–7/kg</span></div></div></div>
+        <div class="c-row"><span class="c-lbl" style="min-width:130px;">Cargueiro ≥ 1.000 kg</span><div class="c-bar-wrap"><div class="c-bar" style="width:55%;background:#1A5276;"><span>US$ 6,00–9,10/kg</span></div></div></div>
+        <div class="chart-note">
+          Fontes: <a href="https://www.sino-shipping.com/pt/country-guides/freight-from-china-to-brazil/" target="_blank">Sino-Shipping</a> · <a href="https://welltrans-logistics.com/shipping-from-china-to-brazil/" target="_blank">Welltrans</a> · <a href="https://hongocean.com/pt/how-much-does-it-cost-to-ship-from-china-to-brazil/" target="_blank">Hongocean</a> · <a href="https://cheap2ship.com" target="_blank">Cheap2Ship (IATA)</a><br>
+          Rotas: Shanghai PVG / Shenzhen SZX / Guangzhou CAN → São Paulo GRU. Taxas de combustível (fuel surcharge) e segurança não incluídas — variam mensalmente.
+        </div>
+      </div>
+
+      <div style="background:var(--white);border:0.5px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-top:1rem;">
+        <h3 style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:0.75rem;">Como calcular o peso taxável</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;font-size:13px;">
+          <div style="background:var(--surface);border-radius:var(--radius-sm);padding:1rem;">
+            <div style="font-size:11px;color:var(--ink-soft);font-weight:500;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Peso cubado</div>
+            <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--ink);">C × L × A (cm) ÷ 6.000</div>
+            <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">Resultado em kg</div>
+          </div>
+          <div style="background:var(--surface);border-radius:var(--radius-sm);padding:1rem;">
+            <div style="font-size:11px;color:var(--ink-soft);font-weight:500;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Peso taxável</div>
+            <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--red);">MAX (peso real, peso cubado)</div>
+            <div style="font-size:11px;color:var(--ink-soft);margin-top:4px;">O maior dos dois é cobrado</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-top:0.75rem;padding-top:0.75rem;border-top:0.5px solid var(--border);line-height:1.6;">
+          <strong style="color:var(--ink);">Exemplo:</strong> Carga de 200 kg real, volume 0,8 m³ (80 × 60 × 50 cm × 4 caixas). Peso cubado = 80.000 cm³ ÷ 6.000 = 133 kg. Peso taxável = MAX(200, 133) = <strong style="color:var(--red);">200 kg × US$ 7/kg = US$ 1.400</strong>
+        </div>
+      </div>
+
+      <div class="frete-warn" style="margin-top:0.75rem;">⚠ <strong>Restrições do modal aéreo:</strong> Produtos com bateria de lítio, líquidos inflamáveis, aerossóis e cargas acima de determinados pesos podem ser proibidos ou exigir tratamento especial (DGR). Consulte seu agente de cargas antes de optar pelo aéreo.</div>
+
+      <div style="background:var(--green-light);border:0.5px solid #8fcfad;border-radius:var(--radius-sm);padding:9px 12px;font-size:12px;color:var(--green);margin-top:0.5rem;line-height:1.6;">
+        ✦ <strong>Quando vale o aéreo?</strong> Para cargas de alto valor agregado e baixo peso/volume (joias, eletrônicos de precisão, amostras, peças urgentes), o frete aéreo pode ser mais competitivo mesmo com tarifa maior por kg — pois elimina 30–40 dias de capital imobilizado em trânsito.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ISENÇÕES FISCAIS -->
+<section class="section" id="isencoes" style="background:var(--white);">
+  <div class="sec-inner">
+    <div class="sec-label">Planejamento tributário</div>
+    <h2>Isenções e benefícios fiscais<br>mais comuns na importação</h2>
+    <p style="color:var(--ink-mid);font-size:15px;max-width:660px;margin-bottom:0.5rem;line-height:1.7;">Conhecer os regimes especiais pode reduzir significativamente a carga tributária da sua importação. Veja os principais benefícios vigentes em 2025/2026 e se sua operação se qualifica.</p>
+    <div style="background:#FEF9E7;border:0.5px solid #F0CA4A;border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:#7D6608;margin-bottom:2rem;line-height:1.6;">
+      ⚠ <strong>Atenção — Reforma Tributária em andamento:</strong> A EC 132/2023 e a IN RFB 2.305/2025 estão promovendo mudanças nos benefícios fiscais. IBS e CBS entram em fase de testes em 2026. Consulte sempre um despachante ou consultor tributário para confirmar a vigência de cada benefício.
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;">
+
+      <!-- EX-TARIFÁRIO -->
+      <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:1.5rem;border-top:3px solid #C0392B;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:0.75rem;">
+          <div style="background:#FADBD8;color:#922B21;font-family:'Syne',sans-serif;font-weight:800;font-size:11px;padding:4px 10px;border-radius:999px;letter-spacing:0.05em;">II · Federal</div>
+          <div style="font-size:11px;color:var(--green);font-weight:500;background:var(--green-light);padding:3px 8px;border-radius:999px;">Redução até 0%</div>
+        </div>
+        <h3 style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;">Ex-Tarifário (BK e BIT)</h3>
+        <p style="font-size:13px;color:var(--ink-mid);line-height:1.6;margin-bottom:0.75rem;">Reduz ou zera o Imposto de Importação para <strong>bens de capital (BK)</strong> e <strong>bens de informática/telecom (BIT)</strong> sem similar nacional. A redução em cascata também impacta IPI, PIS e COFINS.</p>
+        <div style="font-size:12px;color:var(--ink-soft);background:var(--white);border-radius:var(--radius-sm);padding:10px 12px;line-height:1.6;">
+          <strong style="color:var(--ink);">Quem se qualifica:</strong> Empresas que importam máquinas, equipamentos industriais, servidores, equipamentos de telecom sem equivalente fabricado no Brasil.<br>
+          <strong style="color:var(--ink);">Como solicitar:</strong> Pedido ao MDIC com laudo técnico comprovando ausência de similar nacional. Prazo médio: 60–90 dias.<br>
+          <strong style="color:var(--ink);">Vigência 2025/2026:</strong> Ex-tarifários vencidos em 2025 precisam de renovação ou novo pleito.
+        </div>
+      </div>
+
+      <!-- DRAWBACK -->
+      <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:1.5rem;border-top:3px solid #D4AC0D;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:0.75rem;">
+          <div style="background:#FEF9E7;color:#7D6608;font-family:'Syne',sans-serif;font-weight:800;font-size:11px;padding:4px 10px;border-radius:999px;letter-spacing:0.05em;">II · IPI · PIS · COFINS</div>
+          <div style="font-size:11px;color:var(--green);font-weight:500;background:var(--green-light);padding:3px 8px;border-radius:999px;">Suspensão total</div>
+        </div>
+        <h3 style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;">Drawback Integrado</h3>
+        <p style="font-size:13px;color:var(--ink-mid);line-height:1.6;margin-bottom:0.75rem;">Suspende II, IPI, PIS e COFINS na importação de insumos que serão utilizados na fabricação de produtos destinados à exportação. Convênio ICMS CONFAZ 27/1990 também isenta o ICMS nessas operações.</p>
+        <div style="font-size:12px;color:var(--ink-soft);background:var(--white);border-radius:var(--radius-sm);padding:10px 12px;line-height:1.6;">
+          <strong style="color:var(--ink);">Quem se qualifica:</strong> Empresas exportadoras que importam matéria-prima, insumos ou embalagens para industrialização de produtos exportados.<br>
+          <strong style="color:var(--ink);">Modalidades:</strong> Suspensão (mais usada), Isenção e Restituição.<br>
+          <strong style="color:var(--ink);">Comprovação:</strong> Exportação deve ocorrer dentro do prazo do ato concessório (geralmente 1 ano).
+        </div>
+      </div>
+
+      <!-- ICMS DIFERIDO -->
+      <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:1.5rem;border-top:3px solid #1A5276;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:0.75rem;">
+          <div style="background:#EBF5FB;color:#1A5276;font-family:'Syne',sans-serif;font-weight:800;font-size:11px;padding:4px 10px;border-radius:999px;letter-spacing:0.05em;">ICMS · Estadual</div>
+          <div style="font-size:11px;color:var(--green);font-weight:500;background:var(--green-light);padding:3px 8px;border-radius:999px;">Diferimento / Crédito</div>
+        </div>
+        <h3 style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;">ICMS Diferido por Estado</h3>
+        <p style="font-size:13px;color:var(--ink-mid);line-height:1.6;margin-bottom:0.75rem;">Vários estados permitem diferir (postergar) ou reduzir o ICMS na importação, preservando o fluxo de caixa. O imposto é recolhido na saída do produto, não no desembaraço.</p>
+        <div style="font-size:12px;color:var(--ink-soft);background:var(--white);border-radius:var(--radius-sm);padding:10px 12px;line-height:1.6;">
+          <strong style="color:var(--ink);">ES (Espírito Santo):</strong> FUNDAP + diferimento de 100% do ICMS na entrada (Invest-ES).<br>
+          <strong style="color:var(--ink);">SC (Santa Catarina):</strong> TTD 409 — diferimento ou crédito presumido. PRODEC: diferimento até 75% do ICMS.<br>
+          <strong style="color:var(--ink);">GO (Goiás):</strong> PROGOIÁS — crédito presumido reduzindo carga efetiva a ~1–4%.<br>
+          <strong style="color:var(--ink);">SP (São Paulo):</strong> Regimes especiais para autopeças, bens de capital e Indústria 4.0.
+        </div>
+      </div>
+
+      <!-- RECOF -->
+      <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:1.5rem;border-top:3px solid #1A7A4A;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:0.75rem;">
+          <div style="background:#E8F5EE;color:#1A7A4A;font-family:'Syne',sans-serif;font-weight:800;font-size:11px;padding:4px 10px;border-radius:999px;letter-spacing:0.05em;">II · IPI · PIS · COFINS</div>
+          <div style="font-size:11px;color:var(--green);font-weight:500;background:var(--green-light);padding:3px 8px;border-radius:999px;">Suspensão + industrialização</div>
+        </div>
+        <h3 style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;">RECOF-SPED</h3>
+        <p style="font-size:13px;color:var(--ink-mid);line-height:1.6;margin-bottom:0.75rem;">Regime de Entreposto Industrial sob Controle Aduaneiro Informatizado. Suspende tributos na importação de insumos para industrialização destinada à exportação ou ao mercado interno.</p>
+        <div style="font-size:12px;color:var(--ink-soft);background:var(--white);border-radius:var(--radius-sm);padding:10px 12px;line-height:1.6;">
+          <strong style="color:var(--ink);">Quem se qualifica:</strong> Indústrias com faturamento mínimo de R$ 25 milhões/ano e compromisso de exportação mínima.<br>
+          <strong style="color:var(--ink);">Vantagem:</strong> Mais abrangente que o Drawback — cobre também produtos destinados ao mercado interno.<br>
+          <strong style="color:var(--ink);">Controle:</strong> Todo o processo é monitorado pelo SPED (escrituração digital).
+        </div>
+      </div>
+
+      <!-- ZFM -->
+      <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:1.5rem;border-top:3px solid #6C3483;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:0.75rem;">
+          <div style="background:#EBE4F7;color:#6C3483;font-family:'Syne',sans-serif;font-weight:800;font-size:11px;padding:4px 10px;border-radius:999px;letter-spacing:0.05em;">II · IPI · PIS · COFINS · ICMS</div>
+          <div style="font-size:11px;color:var(--green);font-weight:500;background:var(--green-light);padding:3px 8px;border-radius:999px;">Isenção ampla</div>
+        </div>
+        <h3 style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;">Zona Franca de Manaus (ZFM)</h3>
+        <p style="font-size:13px;color:var(--ink-mid);line-height:1.6;margin-bottom:0.75rem;">Empresas estabelecidas na ZFM têm isenção de II, IPI, PIS e COFINS nas importações vinculadas à produção local. Benefício constitucional — preservado pela Reforma Tributária até 2073.</p>
+        <div style="font-size:12px;color:var(--ink-soft);background:var(--white);border-radius:var(--radius-sm);padding:10px 12px;line-height:1.6;">
+          <strong style="color:var(--ink);">Quem se qualifica:</strong> Empresas com processo produtivo básico (PPB) aprovado pela SUFRAMA, instaladas em Manaus.<br>
+          <strong style="color:var(--ink);">Setores:</strong> Eletroeletrônicos, motocicletas, bicicletas, relógios, termoplásticos e outros.<br>
+          <strong style="color:var(--ink);">Atenção:</strong> Exige instalação física e PPB — não é viável para operações pontuais.
+        </div>
+      </div>
+
+      <!-- REPETRO -->
+      <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:1.5rem;border-top:3px solid #884EA0;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:0.75rem;">
+          <div style="background:#F4ECF7;color:#6C3483;font-family:'Syne',sans-serif;font-weight:800;font-size:11px;padding:4px 10px;border-radius:999px;letter-spacing:0.05em;">II · IPI · PIS · COFINS · AFRMM</div>
+          <div style="font-size:11px;color:var(--green);font-weight:500;background:var(--green-light);padding:3px 8px;border-radius:999px;">Isenção total</div>
+        </div>
+        <h3 style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;">REPETRO (Petróleo e Gás)</h3>
+        <p style="font-size:13px;color:var(--ink-mid);line-height:1.6;margin-bottom:0.75rem;">Regime especial para importação de equipamentos destinados à exploração e produção de petróleo e gás natural. Isenta II, IPI, PIS, COFINS e AFRMM.</p>
+        <div style="font-size:12px;color:var(--ink-soft);background:var(--white);border-radius:var(--radius-sm);padding:10px 12px;line-height:1.6;">
+          <strong style="color:var(--ink);">Quem se qualifica:</strong> Empresas do setor de O&G com equipamentos destinados a jazidas.<br>
+          <strong style="color:var(--ink);">Modalidades:</strong> Repetro-Sped (permanente) e Repetro-Industrialização.<br>
+          <strong style="color:var(--ink);">Base legal:</strong> Lei 13.586/2017 e Instrução Normativa RFB 1.781/2017.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TABELA POR PERFIL -->
+    <div style="margin-top:1.5rem;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
+      <h3 style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:1rem;">Qual benefício se encaixa no seu perfil?</h3>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead>
+            <tr style="background:var(--ink);color:#fff;">
+              <th style="padding:8px 12px;text-align:left;font-weight:500;border-radius:4px 0 0 0;">Perfil do importador</th>
+              <th style="padding:8px 12px;text-align:left;font-weight:500;">Benefício recomendado</th>
+              <th style="padding:8px 12px;text-align:left;font-weight:500;">Tributos impactados</th>
+              <th style="padding:8px 12px;text-align:left;font-weight:500;border-radius:0 4px 0 0;">Complexidade</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:0.5px solid var(--border);">
+              <td style="padding:8px 12px;color:var(--ink);">Importa máquinas/equipamentos sem similar nacional</td>
+              <td style="padding:8px 12px;color:var(--red);font-weight:500;">Ex-Tarifário</td>
+              <td style="padding:8px 12px;color:var(--ink-mid);">II (até 0%), cascata IPI/PIS/COFINS</td>
+              <td style="padding:8px 12px;"><span style="background:#FEF9E7;color:#7D6608;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;">Média</span></td>
+            </tr>
+            <tr style="border-bottom:0.5px solid var(--border);background:var(--white);">
+              <td style="padding:8px 12px;color:var(--ink);">Importa insumos para fabricar produtos exportados</td>
+              <td style="padding:8px 12px;color:var(--red);font-weight:500;">Drawback Integrado</td>
+              <td style="padding:8px 12px;color:var(--ink-mid);">II, IPI, PIS, COFINS, ICMS</td>
+              <td style="padding:8px 12px;"><span style="background:#FEF9E7;color:#7D6608;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;">Média</span></td>
+            </tr>
+            <tr style="border-bottom:0.5px solid var(--border);">
+              <td style="padding:8px 12px;color:var(--ink);">Quer reduzir ICMS e melhorar fluxo de caixa</td>
+              <td style="padding:8px 12px;color:var(--red);font-weight:500;">ICMS Diferido (ES, SC, GO)</td>
+              <td style="padding:8px 12px;color:var(--ink-mid);">ICMS (diferimento 100% em ES)</td>
+              <td style="padding:8px 12px;"><span style="background:#E8F5EE;color:#1A7A4A;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;">Baixa</span></td>
+            </tr>
+            <tr style="border-bottom:0.5px solid var(--border);background:var(--white);">
+              <td style="padding:8px 12px;color:var(--ink);">Indústria exportadora de grande porte</td>
+              <td style="padding:8px 12px;color:var(--red);font-weight:500;">RECOF-SPED</td>
+              <td style="padding:8px 12px;color:var(--ink-mid);">II, IPI, PIS, COFINS</td>
+              <td style="padding:8px 12px;"><span style="background:#FADBD8;color:#922B21;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;">Alta</span></td>
+            </tr>
+            <tr style="border-bottom:0.5px solid var(--border);">
+              <td style="padding:8px 12px;color:var(--ink);">Empresa instalada em Manaus com PPB aprovado</td>
+              <td style="padding:8px 12px;color:var(--red);font-weight:500;">Zona Franca de Manaus</td>
+              <td style="padding:8px 12px;color:var(--ink-mid);">II, IPI, PIS, COFINS, ICMS</td>
+              <td style="padding:8px 12px;"><span style="background:#FADBD8;color:#922B21;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;">Alta</span></td>
+            </tr>
+            <tr>
+              <td style="padding:8px 12px;color:var(--ink);">Setor de petróleo e gás (O&G)</td>
+              <td style="padding:8px 12px;color:var(--red);font-weight:500;">REPETRO</td>
+              <td style="padding:8px 12px;color:var(--ink-mid);">II, IPI, PIS, COFINS, AFRMM</td>
+              <td style="padding:8px 12px;"><span style="background:#FADBD8;color:#922B21;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;">Alta</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-top:1rem;display:flex;gap:10px;align-items:center;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:1rem 1.25rem;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--ink-soft);"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      <span style="font-size:12px;color:var(--ink-mid);line-height:1.6;">Estes benefícios exigem habilitação prévia junto à Receita Federal ou MDIC. O CustoChina simula o cenário padrão sem benefícios — use os insights de IA após calcular para ver quais regimes podem se aplicar à sua operação. <a href="https://www.linkedin.com/in/arthur-guimaraes/" target="_blank" style="color:var(--red);font-weight:500;text-decoration:none;">Falar com Arthur Guimaraes →</a></span>
+    </div>
+  </div>
+</section>
+
+<!-- TRIBUTOS -->
+<section class="section" style="background:var(--white);">
+  <div class="sec-inner">
+    <div class="sec-label">Tributos calculados</div>
+    <h2>Todos os impostos em um só lugar</h2>
+    <div class="trib-grid">
+      <div class="trib-card fade-up"><span class="trib-badge federal">Federal</span><h3>II — Imposto de Importação</h3><p>Alíquota varia por NCM — 0% (TI) até 35% (têxteis). Base de cálculo: valor aduaneiro CIF em BRL.</p><div class="trib-rate">0–35%</div></div>
+      <div class="trib-card fade-up" style="transition-delay:.05s"><span class="trib-badge federal">Federal</span><h3>IPI — Prod. Industrializados</h3><p>Incide sobre CIF + II. Varia conforme essencialidade. Cosméticos chegam a 36,5%.</p><div class="trib-rate">0–365%</div></div>
+      <div class="trib-card fade-up" style="transition-delay:.1s"><span class="trib-badge federal">Federal</span><h3>PIS-Importação</h3><p>Contribuição social sobre valor aduaneiro (CIF em BRL). Lei 10.865/2004.</p><div class="trib-rate">2,10%</div></div>
+      <div class="trib-card fade-up" style="transition-delay:.15s"><span class="trib-badge federal">Federal</span><h3>COFINS-Importação</h3><p>Sobre o valor aduaneiro. Geralmente o segundo maior tributo na operação.</p><div class="trib-rate">9,65%</div></div>
+      <div class="trib-card fade-up" style="transition-delay:.2s"><span class="trib-badge estadual">Estadual</span><h3>ICMS</h3><p>Calculado "por dentro" sobre base majorada. Alíquota varia de 17% a 20,5% por estado.</p><div class="trib-rate">17–20,5%</div></div>
+      <div class="trib-card fade-up" style="transition-delay:.25s"><span class="trib-badge federal">Federal</span><h3>AFRMM + SISCOMEX</h3><p>AFRMM: 8% sobre frete marítimo. SISCOMEX: R$ 214,50 fixo por DI.</p><div class="trib-rate">8% + fixo</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FONTES -->
+<section class="section">
+  <div class="sec-inner">
+    <div class="sec-label">Transparência</div>
+    <h2>De onde vêm os dados?</h2>
+    <div class="fontes-grid">
+      <div class="fonte-card fade-up"><span class="fonte-tag">Câmbio</span><h3>Cotação USD/BRL</h3><p>Taxa comercial em tempo real via AWESOMEapi (PTAX — Banco Central do Brasil).</p><a href="https://economia.awesomeapi.com.br" target="_blank">economia.awesomeapi.com.br →</a></div>
+      <div class="fonte-card fade-up" style="transition-delay:.05s"><span class="fonte-tag">Tributos federais</span><h3>II, IPI, PIS, COFINS</h3><p>Alíquotas da TEC e Lei 10.865/2004. PIS: 2,10% · COFINS: 9,65%.</p><a href="https://www.gov.br/receitafederal" target="_blank">Receita Federal →</a></div>
+      <div class="fonte-card fade-up" style="transition-delay:.1s"><span class="fonte-tag">ICMS</span><h3>Imposto estadual</h3><p>Alíquotas por UF conforme legislações estaduais. Calculado por dentro (RICMS).</p><a href="https://www.confaz.fazenda.gov.br" target="_blank">CONFAZ →</a></div>
+      <div class="fonte-card fade-up" style="transition-delay:.15s"><span class="fonte-tag">Seguro</span><h3>Seguro Internacional</h3><p>Estimativa de 0,4% do FOB — média de mercado. Consulte sua seguradora.</p><a href="https://www.susep.gov.br" target="_blank">SUSEP →</a></div>
+      <div class="fonte-card fade-up" style="transition-delay:.2s"><span class="fonte-tag">Frete</span><h3>Referências de frete</h3><p>Drewry, Logcomex, Bloomberg Línea e Sino-Shipping. Sugerido com +10–15% de margem.</p><a href="https://logcomex.com" target="_blank">Logcomex →</a></div>
+      <div class="fonte-card fade-up" style="transition-delay:.25s"><span class="fonte-tag">NCM via IA</span><h3>Predição de NCM</h3><p>Sugestão gerada por IA (Claude — Anthropic) com base na descrição do produto. Sempre confirme com seu despachante.</p><a href="https://www.linkedin.com/in/arthur-guimaraes/" target="_blank">Falar com especialista →</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- CADASTRO -->
+<section class="section" id="cadastro" style="background:var(--white);">
+  <div class="sec-inner">
+    <div class="sec-label">Comece agora</div>
+    <h2>Teste grátis — sem cartão</h2>
+    <p style="color:var(--ink-mid);font-size:15px;max-width:560px;margin-bottom:2rem;">Crie sua conta e ganhe <strong>1 simulação completa gratuita</strong> — incluindo predição de NCM com IA, leitura de Proforma e relatório PDF.</p>
+    <div style="background:var(--surface);border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:2rem;max-width:480px;">
+
+      <form id="mc-form" action="https://gmail.us15.list-manage.com/subscribe/post?u=94d70f7c1c1c23eaf4e11851d&id=3851974fef&f_id=00eec2e1f0" method="post" target="_blank" novalidate>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+
+          <div>
+            <div class="sec-label" style="margin-bottom:4px;font-size:10px;">Nome completo *</div>
+            <input type="text" name="FNAME" id="mc-fname" required placeholder="Seu nome completo"
+              style="width:100%;height:38px;padding:0 12px;border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink);">
+          </div>
+
+          <div>
+            <div class="sec-label" style="margin-bottom:4px;font-size:10px;">E-mail *</div>
+            <input type="email" name="EMAIL" id="mc-email" required placeholder="seu@email.com"
+              style="width:100%;height:38px;padding:0 12px;border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink);">
+          </div>
+
+          <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <div class="sec-label" style="margin-bottom:4px;font-size:10px;">WhatsApp *</div>
+              <input type="text" name="PHONE" id="mc-phone" required placeholder="+55 11 99999-9999"
+                style="width:100%;height:38px;padding:0 12px;border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink);">
+            </div>
+            <div>
+              <div class="sec-label" style="margin-bottom:4px;font-size:10px;">Cidade *</div>
+              <input type="text" name="LNAME" id="mc-cidade" required placeholder="São Paulo"
+                style="width:100%;height:38px;padding:0 12px;border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink);">
+            </div>
+          </div>
+
+          <div>
+            <div class="sec-label" style="margin-bottom:4px;font-size:10px;">Empresa *</div>
+            <input type="text" name="COMPANY" id="mc-empresa" required placeholder="Nome da empresa"
+              style="width:100%;height:38px;padding:0 12px;border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);font-size:13px;font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink);">
+          </div>
+
+          <!-- Honeypot anti-bot — não remover -->
+          <div style="position:absolute;left:-5000px;" aria-hidden="true">
+            <input type="text" name="b_94d70f7c1c1c23eaf4e11851d_3851974fef" tabindex="-1" value="">
+          </div>
+
+          <button type="submit" id="mc-submit-btn"
+            style="width:100%;height:42px;background:var(--red);color:#fff;border:none;border-radius:var(--radius-sm);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;transition:background 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            Criar conta grátis — 1 simulação incluída
+          </button>
+
+          <div id="mc-status" style="font-size:12px;text-align:center;min-height:16px;"></div>
+        </div>
+      </form>
+
+      <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:0.5px solid var(--border);font-size:11px;color:var(--ink-soft);text-align:center;line-height:1.6;">
+        Ao criar sua conta você concorda com os termos de uso.<br>Sem spam — apenas conteúdo relevante sobre importação China-Brasil.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PLANOS -->
+<section class="section" id="planos">
+  <div class="sec-inner">
+    <div class="sec-label">Créditos e planos</div>
+    <h2>Simples como deve ser</h2>
+    <p style="color:var(--ink-mid);font-size:15px;max-width:560px;margin-bottom:2rem;">Compre créditos conforme a necessidade — sem assinatura, sem fidelidade.</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-top:0.5rem;">
+
+      <div class="plan-card fade-up">
+        <div class="plan-badge">Gratuito</div>
+        <div class="plan-price">R$ 0</div>
+        <div class="plan-price-sub">para sempre</div>
+        <ul class="plan-features">
+          <li class="ok">1 simulação completa</li>
+          <li class="ok">Relatório PDF básico</li>
+          <li class="ok">Cotação USD em tempo real</li>
+          <li class="no">Predição NCM com IA</li>
+          <li class="no">Leitura de Proforma (IA)</li>
+          <li class="no">Insights de otimização</li>
+          <li class="no">PDF 2 páginas completo</li>
+        </ul>
+        <a href="#cadastro" class="plan-btn plan-btn-outline">Criar conta grátis</a>
+      </div>
+
+      <div class="plan-card plan-featured fade-up" style="transition-delay:0.1s">
+        <div style="background:var(--gold);color:#412402;font-size:10px;font-weight:700;text-align:center;padding:5px;margin:-1.5rem -1.5rem 1rem;border-radius:var(--radius) var(--radius) 0 0;letter-spacing:0.05em;text-transform:uppercase;">Mais popular</div>
+        <div class="plan-badge" style="color:var(--red);">Pacote 10</div>
+        <div class="plan-price">R$ 49</div>
+        <div class="plan-price-sub">10 simulações · R$ 4,90 cada</div>
+        <ul class="plan-features">
+          <li class="ok">10 simulações completas</li>
+          <li class="ok">Relatório PDF 2 páginas</li>
+          <li class="ok">Cotação USD em tempo real</li>
+          <li class="ok">Predição NCM com IA</li>
+          <li class="ok">Leitura de Proforma (IA)</li>
+          <li class="ok">Insights de otimização</li>
+          <li class="ok">Créditos sem validade</li>
+        </ul>
+        <a href="#" onclick="irParaPagamento('pacote10')" class="plan-btn plan-btn-primary">Comprar agora</a>
+      </div>
+
+      <div class="plan-card fade-up" style="transition-delay:0.2s">
+        <div class="plan-badge">Pacote 30</div>
+        <div class="plan-price">R$ 119</div>
+        <div class="plan-price-sub">30 simulações · R$ 3,97 cada</div>
+        <ul class="plan-features">
+          <li class="ok">30 simulações completas</li>
+          <li class="ok">Relatório PDF 2 páginas</li>
+          <li class="ok">Cotação USD em tempo real</li>
+          <li class="ok">Predição NCM com IA</li>
+          <li class="ok">Leitura de Proforma (IA)</li>
+          <li class="ok">Insights de otimização</li>
+          <li class="ok">Créditos sem validade</li>
+        </ul>
+        <a href="#" onclick="irParaPagamento('pacote30')" class="plan-btn plan-btn-outline">Comprar agora</a>
+      </div>
+
+    </div>
+    <div style="margin-top:1.25rem;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:1rem 1.25rem;font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:10px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--ink-soft);"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Pagamento via Pix ou cartão. Créditos não expiram. Para empresas com volume acima de 100 simulações mensais, entre em contato para condições especiais.
+      <a href="https://www.linkedin.com/in/arthur-guimaraes/" target="_blank" style="color:var(--red);text-decoration:none;white-space:nowrap;">Falar com Arthur →</a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-band">
+  <h2>Simule agora, gratuitamente</h2>
+  <p>Sem cadastro. Relatório PDF em 2 páginas. Cotação do dólar em tempo real.</p>
+  <a href="#simulador" class="btn-cta">Simular importação →</a><br>
+  <a href="https://www.linkedin.com/in/arthur-guimaraes/" target="_blank" class="cta-author">
+    <div class="cta-av">AG</div>
+    <div><div style="font-size:13px;font-weight:500;color:#fff;">Arthur Guimaraes</div><div style="font-size:11px;color:rgba(255,255,255,0.45);">Connecting Brazil and China · LinkedIn</div></div>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="#0A66C2" style="margin-left:4px;"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+  </a>
+</div>
+
+<footer>
+  <div>
+    <div class="footer-logo">Custo<span>China</span></div>
+    <p style="margin-top:3px;">Uma iniciativa de <a href="https://www.linkedin.com/in/arthur-guimaraes/" target="_blank">Arthur Guimaraes</a> · Connecting Brazil and China</p>
+  </div>
+  <div style="text-align:right;">
+    <p>Valores são estimativas para fins de planejamento.</p>
+    <p>Consulte um despachante aduaneiro para operações reais.</p>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+const {jsPDF} = window.jspdf;
+const CLAUDE_MODEL = "claude-sonnet-4-20250514";
+const icmsUF={SP:.18,RJ:.20,MG:.18,RS:.18,PR:.18,SC:.17,BA:.205,GO:.17,PE:.205,CE:.20,MT:.17,MS:.17,AM:.20,PA:.17,ES:.17,DF:.18};
+const ncmDB={"8471":{desc:"Computadores e periféricos",ii:0,ipi:0},"8517":{desc:"Celulares e telecomunicações",ii:.16,ipi:.15},"6109":{desc:"Camisetas e malhas",ii:.35,ipi:0},"9403":{desc:"Móveis",ii:.18,ipi:.05},"8507":{desc:"Baterias e acumuladores",ii:.10,ipi:.10},"3304":{desc:"Cosméticos e maquiagem",ii:.18,ipi:.365},"8516":{desc:"Eletrodomésticos",ii:.16,ipi:.10},"7308":{desc:"Estruturas de ferro/aço",ii:.12,ipi:0},"3926":{desc:"Artefatos de plástico",ii:.18,ipi:0},"9503":{desc:"Brinquedos",ii:.18,ipi:.10},"1905":{desc:"Produtos de padaria/biscoitos",ii:.16,ipi:0},"6403":{desc:"Calçados",ii:.35,ipi:0},"8708":{desc:"Peças para veículos",ii:.14,ipi:.05},"9401":{desc:"Assentos e cadeiras",ii:.18,ipi:.05},"8544":{desc:"Fios e cabos elétricos",ii:.12,ipi:0}};
+
+let lastResult=null, seguroManual=false, containerType='FCL', proformaData=null;
+
+const contDescs={
+  FCL:'<strong>FCL:</strong> Container inteiro exclusivo (20 ou 40 pés). Ideal para cargas acima de ~15 m³. Mais rápido no desembaraço e menor risco de avaria. <span style="color:#1A7A4A;font-weight:500;">✓ Simulação completa disponível.</span>',
+  LCL:'<strong>LCL:</strong> Sua carga compartilha espaço com outros importadores. Cobrado por m³ ou kg. Vantajoso para volumes até ~15 m³.'
+};
+
+function setContainer(t){
+  containerType=t;
+  document.getElementById('btn-fcl').classList.toggle('active',t==='FCL');
+  document.getElementById('btn-lcl').classList.toggle('active',t==='LCL');
+  document.getElementById('cont-desc').innerHTML=contDescs[t];
+  const warn=document.getElementById('lcl-warning');
+  const freteLabel=document.getElementById('frete-label-note');
+  if(t==='LCL'){
+    if(warn)warn.style.display='block';
+    if(freteLabel)freteLabel.style.display='inline';
+  } else {
+    if(warn)warn.style.display='none';
+    if(freteLabel)freteLabel.style.display='none';
+  }
+}
+// onModalChange defined above
+function autoSeguro(){
+  const f=parseFloat(document.getElementById('fob').value)||0;
+  const display=document.getElementById('seg-auto-val');
+  if(f>0){
+    const val=(f*.004);
+    if(display)display.textContent='US$ '+val.toFixed(2)+' (0,4% de US$ '+f.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+')';
+    if(!seguroManual)document.getElementById('seguro').value=val.toFixed(2);
+  } else {
+    if(display)display.textContent='— preencha o FOB acima';
+    if(!seguroManual)document.getElementById('seguro').value='';
+  }
+}
+
+function setSeguroMode(mode){
+  seguroManual=(mode==='manual');
+  document.getElementById('seg-btn-auto').classList.toggle('active',mode==='auto');
+  document.getElementById('seg-btn-manual').classList.toggle('active',mode==='manual');
+  document.getElementById('seg-auto-display').style.display=mode==='auto'?'flex':'none';
+  document.getElementById('seguro').style.display=mode==='manual'?'block':'none';
+  document.getElementById('seg-note-auto').style.display=mode==='auto'?'block':'none';
+  document.getElementById('seg-note-manual').style.display=mode==='manual'?'block':'none';
+  if(mode==='auto')autoSeguro();
+  else { document.getElementById('seguro').value=''; document.getElementById('seguro').focus(); }
+}
+function onNcm(v){const p=v.replace(/\D/g,'').substring(0,4);const h=document.getElementById('ncm-hint');if(p.length===4&&ncmDB[p])h.textContent='✓ '+ncmDB[p].desc;else if(p.length>=4)h.textContent='NCM não identificado — IA usará alíquotas médias (II 18%, IPI 5%)';else h.textContent='';}
+function fmt(n,d=2){return n.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function fU(n){return'US$ '+fmt(n);}function fR(n){return'R$ '+fmt(n);}
+
+// ── AI CALL ──────────────────────────────────────────────────────────────────
+async function callClaude(prompt, systemPrompt, imageBase64=null, mediaType=null){
+  const content = [];
+  if(imageBase64 && mediaType){
+    if(mediaType==='application/pdf'){
+      content.push({type:'document',source:{type:'base64',media_type:'application/pdf',data:imageBase64}});
+    } else {
+      content.push({type:'image',source:{type:'base64',media_type:mediaType,data:imageBase64}});
+    }
+  }
+  content.push({type:'text',text:prompt});
+  const body={model:CLAUDE_MODEL,max_tokens:1000,messages:[{role:'user',content}]};
+  if(systemPrompt)body.system=systemPrompt;
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const d=await r.json();
+  return d.content.map(i=>i.text||'').join('');
+}
+
+// ── NCM PREDICTION ────────────────────────────────────────────────────────────
+async function predictNCM(){
+  const desc=document.getElementById('descricao').value.trim();
+  if(!desc){alert('Preencha a descrição do produto primeiro.');return;}
+  const btn=document.getElementById('btn-predict');
+  btn.innerHTML='<span class="spin"></span> Prevendo...';btn.disabled=true;
+  try{
+    const resp = await callClaude(
+      `Produto: "${desc}"\n\nSugira os 3 NCMs brasileiros mais prováveis para esse produto. Responda APENAS JSON válido, sem markdown:\n{"suggestions":[{"code":"XXXXXXXX","description":"descrição resumida em português","ii_rate":0.18,"ipi_rate":0.05,"confidence":"alta|média|baixa","justification":"motivo em 1 frase"}]}`,
+      'Você é um especialista em classificação fiscal brasileira (NCM/TEC). Responda SOMENTE com JSON válido, sem texto extra, sem marcação markdown.'
+    );
+    let json;
+    try{json=JSON.parse(resp.replace(/```json|```/g,'').trim());}
+    catch{throw new Error('Resposta inválida da IA');}
+    const sugs=json.suggestions||[];
+    const box=document.getElementById('ncm-suggestions');
+    box.innerHTML=sugs.map(s=>`
+      <div class="ncm-sug-item" onclick="applyNCM('${s.code}','${s.description}',${s.ii_rate},${s.ipi_rate})">
+        <span class="ncm-sug-code">${s.code.replace(/(\d{4})(\d{2})(\d{2})/,'$1.$2.$3')}</span>
+        ${s.description}
+        <span class="ncm-sug-rate">II ${(s.ii_rate*100).toFixed(0)}% · IPI ${(s.ipi_rate*100).toFixed(1)}% · ${s.confidence}</span>
+        <div style="font-size:10px;color:var(--ink-soft);margin-top:2px;">${s.justification}</div>
+      </div>`).join('');
+    box.style.display='block';
+  }catch(e){alert('Erro ao prever NCM: '+e.message);}
+  btn.innerHTML='✦ Prever com IA';btn.disabled=false;
+}
+
+function applyNCM(code,desc,ii,ipi){
+  document.getElementById('ncm').value=code;
+  document.getElementById('ncm-hint').textContent='✓ (IA) '+desc+' · II '+( ii*100).toFixed(0)+'% · IPI '+(ipi*100).toFixed(1)+'%';
+  document.getElementById('ncm-hint').style.color='#1A7A4A';
+  document.getElementById('ncm').classList.add('ai-filled');
+  document.getElementById('ncm-suggestions').style.display='none';
+  // store custom rates
+  window._customII=ii; window._customIPI=ipi;
+}
+
+// ── PROFORMA UPLOAD ───────────────────────────────────────────────────────────
+function handleDrop(ev){ev.preventDefault();document.getElementById('upload-zone').classList.remove('drag');const f=ev.dataTransfer.files[0];if(f)handleFileUpload(f);}
+async function handleFileUpload(file){
+  if(!file)return;
+  const zone=document.getElementById('upload-zone');
+  const resultDiv=document.getElementById('upload-result');
+  zone.innerHTML='<div class="upload-icon"><span class="spin" style="border-top-color:var(--red);border-color:rgba(192,57,43,0.2);width:18px;height:18px;"></span></div><div class="upload-text">Lendo documento com IA...</div>';
+  const base64=await fileToBase64(file);
+  const mediaType=file.type||'application/pdf';
+  try{
+    const resp=await callClaude(
+      'Analise este documento (Proforma Invoice ou Packing List) e extraia as informações disponíveis. Responda APENAS JSON válido:\n{"supplier":"nome do fornecedor","product_en":"nome do produto em inglês","product_pt":"nome do produto em português","fob_value":0,"currency":"USD","incoterm":"FOB","port_origin":"porto de origem","port_destination":"porto de destino","ncm":"NCM se informado ou null","quantity":"quantidade e unidade","net_weight":"peso líquido","gross_weight":"peso bruto","payment_terms":"condições de pagamento","invoice_number":"número da invoice","invoice_date":"data"}',
+      'Você é especialista em comércio exterior. Extraia dados de documentos de importação. Responda SOMENTE JSON válido sem markdown.',
+      base64, mediaType
+    );
+    let json;
+    try{json=JSON.parse(resp.replace(/```json|```/g,'').trim());}
+    catch{throw new Error('Não foi possível interpretar o documento');}
+    proformaData=json;
+    // auto-fill form
+    if(json.supplier)document.getElementById('fornecedor').value=json.supplier;
+    if(json.product_pt)document.getElementById('descricao').value=json.product_pt;
+    if(json.fob_value&&json.fob_value>0){document.getElementById('fob').value=json.fob_value;autoSeguro();}
+    if(json.port_origin)document.getElementById('embarque').value=json.port_origin;
+    if(json.ncm&&json.ncm!=='null'){document.getElementById('ncm').value=json.ncm;onNcm(json.ncm);}
+    zone.innerHTML='<div class="upload-icon">✅</div><div class="upload-text"><strong>Documento lido com sucesso</strong></div>';
+    zone.classList.add('loaded');
+    resultDiv.style.display='block';
+    resultDiv.innerHTML=`<div style="font-size:11px;font-weight:600;color:var(--green);margin-bottom:6px;display:flex;align-items:center;gap:5px;"><span>Dados extraídos pela IA</span><span class="ai-badge">✦ IA</span></div>`+
+    Object.entries({
+      'Fornecedor':json.supplier,'Produto (EN)':json.product_en,'Produto (PT)':json.product_pt,
+      'Valor FOB':json.fob_value?(json.currency||'USD')+' '+json.fob_value:null,
+      'Incoterm':json.incoterm,'Porto origem':json.port_origin,'Porto destino':json.port_destination,
+      'NCM':json.ncm,'Quantidade':json.quantity,'Invoice nº':json.invoice_number,'Data':json.invoice_date,
+      'Pagamento':json.payment_terms
+    }).filter(([,v])=>v&&v!=='null'&&v!=='0').map(([k,v])=>`<div class="upload-field"><span class="upload-field-key">${k}</span><span class="upload-field-val">${v}</span></div>`).join('');
+  }catch(e){
+    zone.innerHTML='<div class="upload-icon">⚠️</div><div class="upload-text">Não foi possível ler o documento.<br><small>'+e.message+'</small></div>';
+    zone.classList.remove('loaded');
+  }
+}
+function fileToBase64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});}
+
+// ── CALCULATE ─────────────────────────────────────────────────────────────────
+async function calcular(){
+  const fob=parseFloat(document.getElementById('fob').value)||0;
+  const frete=parseFloat(document.getElementById('frete').value)||0;
+  const seguroInp=parseFloat(document.getElementById('seguro').value);
+  const seguro=seguroManual?(isNaN(seguroInp)?0:seguroInp):fob*.004;
+  const seguroAuto=!seguroManual;
+  const uf=document.getElementById('uf').value;
+  const ncm=document.getElementById('ncm').value.replace(/\D/g,'');
+  const descricao=document.getElementById('descricao').value||'Mercadoria importada';
+  const fornecedor=document.getElementById('fornecedor').value||'—';
+  const modal=document.getElementById('modal').value;
+  const embarque=document.getElementById('embarque').value||'China';
+  if(!fob||!uf){alert('Preencha o valor FOB e selecione o estado.');return;}
+  const btn=document.getElementById('btn-calc');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Calculando...';
+  let cotacao=5.85;
+  try{const r=await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL');const d=await r.json();cotacao=parseFloat(d.USDBRL.bid);}catch(e){}
+  const prefix=ncm.substring(0,4);
+  const ncmInfo=ncmDB[prefix];
+  const aliqII=window._customII!==undefined?window._customII:(ncmInfo?ncmInfo.ii:.18);
+  const aliqIPI=window._customIPI!==undefined?window._customIPI:(ncmInfo?ncmInfo.ipi:.05);
+  const icmsAliq=icmsUF[uf]||.18;
+  const cif=fob+frete+seguro;
+  const cifBRL=cif*cotacao;
+  const II=cifBRL*aliqII;
+  const IPI=(cifBRL+II)*aliqIPI;
+  const PIS=cifBRL*.0210;
+  const COFINS=cifBRL*.0965;
+  const baseICMS=(cifBRL+II+IPI+PIS+COFINS)/(1-icmsAliq);
+  const ICMS=baseICMS*icmsAliq;
+  const afrmmAliq=modal==='maritimo'?.08:0;
+  const AFRMM=frete*cotacao*afrmmAliq;
+  const SISCOMEX=214.50;
+  const totalTrib=II+IPI+PIS+COFINS+ICMS+AFRMM+SISCOMEX;
+  const SDA=cifBRL*.005+800;
+  const armazenagem=cifBRL*.003+300;
+  const THC=modal==='maritimo'?cifBRL*.004+200:0;
+  const freteInterno=cifBRL*.008+500;
+  const totalDesp=SDA+armazenagem+THC+freteInterno;
+  const totalBRL=cifBRL+totalTrib+totalDesp;
+  const totalUSD=totalBRL/cotacao;
+  const pctTrib=(totalTrib/cifBRL)*100;
+  const pctNacional=((totalBRL/(fob*cotacao)-1)*100);
+  const pctImposto=((totalTrib+totalDesp)/totalBRL*100);
+  lastResult={fob,frete,seguro,seguroAuto,cif,cifBRL,cotacao,uf,ncm,descricao,fornecedor,modal,embarque,containerType,aliqII,aliqIPI,icmsAliq,afrmmAliq,II,IPI,PIS,COFINS,ICMS,AFRMM,SISCOMEX,totalTrib,SDA,armazenagem,THC,freteInterno,totalDesp,totalBRL,totalUSD,pctTrib,pctNacional,pctImposto,ncmInfo,prefix,proformaData};
+
+  // Generate AI insights
+  btn.innerHTML='<span class="spin"></span> Gerando insights...';
+  let insightsHTML='';
+  try{
+    const insightResp=await callClaude(
+      `Operação de importação China → Brasil:
+- NCM: ${ncm||'não informado'} (${ncmInfo?ncmInfo.desc:'NCM não identificado'})
+- Produto: ${descricao}
+- Valor FOB: US$ ${fmt(fob)}
+- II: ${(aliqII*100).toFixed(0)}% · IPI: ${(aliqIPI*100).toFixed(1)}%
+- ICMS: ${(icmsAliq*100).toFixed(1)}% (${uf})
+- Modal: ${modal} / ${containerType}
+- Carga tributária total: ${fmt(pctTrib,0)}% sobre CIF
+
+Gere 3 a 5 insights práticos e específicos de otimização de custo para essa importação. Inclua obrigatoriamente quando relevante: Ex-tarifário, Drawback, Recof, Simples Nacional, benefícios por UF, ICMS diferido, reclassificação NCM, Regime Especial. Responda SOMENTE JSON:
+{"insights":[{"type":"green|gold|red","icon":"✦|⚠|💡|📦|🏛","title":"título curto","text":"explicação prática em 1-2 frases"}]}`,
+      'Você é consultor de comércio exterior especializado em redução de custos tributários na importação brasileira. Responda SOMENTE JSON válido sem markdown.'
+    );
+    let ins;
+    try{ins=JSON.parse(insightResp.replace(/```json|```/g,'').trim());}
+    catch{ins={insights:[]};}
+    insightsHTML=`<div class="insights-panel"><div style="font-size:11px;font-weight:600;color:var(--ink);margin-bottom:6px;display:flex;align-items:center;gap:5px;">Insights de otimização <span class="ai-badge">✦ IA</span></div>`+
+    (ins.insights||[]).map(i=>`<div class="insight-item ${i.type}"><div class="insight-icon">${i.icon}</div><div class="insight-text"><strong>${i.title}</strong>${i.text}</div></div>`).join('')+'</div>';
+  }catch(e){insightsHTML='<div class="insight-item gold"><div class="insight-icon">💡</div><div class="insight-text"><strong>Insights indisponíveis</strong>Verifique conexão para gerar análise de otimização.</div></div>';}
+
+  const taxes=[
+    ['II — Imposto de Importação',(aliqII*100).toFixed(0)+'% s/ CIF',II],
+    ['IPI',(aliqIPI*100).toFixed(1)+'% s/ CIF+II',IPI],
+    ['PIS-Importação','2,10%',PIS],['COFINS-Importação','9,65%',COFINS],
+    ['ICMS — '+uf,(icmsAliq*100).toFixed(1)+'% p.d.',ICMS],
+    ['AFRMM',modal==='maritimo'?'8% s/frete':'N/A aéreo',AFRMM],
+    ['SISCOMEX','R$ 214,50 fixo',SISCOMEX],
+  ];
+  let taxHTML=taxes.map(t=>`<div class="tax-row-r"><span>${t[0]} <span style="font-size:10px;color:var(--ink-soft);">(${t[1]})</span></span><strong>${fR(t[2])}</strong></div>`).join('');
+
+  document.getElementById('results').style.display='block';
+  document.getElementById('results').innerHTML=`
+    <div class="res-summary">
+      <div class="res-card"><div class="res-lbl">CIF Total</div><div class="res-val">${fU(cif)}</div></div>
+      <div class="res-card"><div class="res-lbl">USD/BRL</div><div class="res-val">R$ ${fmt(cotacao,4)}</div></div>
+      <div class="res-card"><div class="res-lbl">Total tributos</div><div class="res-val">${fR(totalTrib)}</div></div>
+      <div class="res-card"><div class="res-lbl">Desp. estimadas</div><div class="res-val">${fR(totalDesp)}</div></div>
+    </div>
+    <div class="res-total-box">
+      <div class="res-lbl">Custo total nacionalizado</div>
+      <div class="res-val">${fR(totalBRL)}</div>
+      <div class="res-sub">≈ ${fU(totalUSD)} · +${fmt(pctNacional,0)}% vs FOB · ${fmt(pctImposto,0)}% é custo de importação</div>
+    </div>
+    <div class="tax-table">${taxHTML}</div>
+    ${seguroAuto?`<div style="font-size:10px;color:var(--ink-soft);margin-top:3px;">* Seguro estimado: 0,4% FOB = US$ ${fmt(seguro,2)}</div>`:''}
+    ${insightsHTML}
+    <button class="btn-pdf" onclick="gerarPDF()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      Baixar Relatório PDF (2 páginas)
+    </button>
+    <a href="https://www.linkedin.com/in/arthur-guimaraes/" target="_blank" class="btn-li">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      Falar com Arthur Guimaraes
+    </a>`;
+  btn.disabled=false;btn.innerHTML='Recalcular →';
+}
+
+// ── PDF GENERATION (2 pages) ─────────────────────────────────────────────────
+function gerarPDF(){
+  if(!lastResult)return;
+  const r=lastResult;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210,M=14,CW=W-M*2;
+  const RED=[192,57,43],GOLD=[212,172,13],INK=[26,26,26],SOFT=[136,136,136],LIGHT=[250,250,248],WHITE=[255,255,255];
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('pt-BR');
+  const timeStr=now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  function sf(size,w,color){doc.setFontSize(size);doc.setFont('helvetica',w==='bold'?'bold':'normal');doc.setTextColor(...(color||INK));}
+  function rct(x,y,w,h,fill){if(fill){doc.setFillColor(...fill);doc.roundedRect(x,y,w,h,1.5,1.5,'F');}}
+  function hdr(){
+    rct(0,0,W,26,INK);
+    sf(18,'bold',WHITE);doc.text('CustoChina',M,16);
+    sf(7,'normal',GOLD);doc.text('Planilha de Custos de Importacao — China para o Brasil',M,22);
+    sf(6,'normal',[160,160,160]);doc.text('Arthur Guimaraes  |  linkedin.com/in/arthur-guimaraes  |  '+dateStr+' '+timeStr,W-M,16,'right');
+    sf(6,'normal',[120,120,120]);doc.text('Estimativas para fins de planejamento. Consulte um despachante aduaneiro para operacoes reais.',W-M,22,'right');
+  }
+
+  // ─── PAGE 1: EXECUTIVE SUMMARY ─────────────────────────────────────────────
+  hdr();
+  let y=32;
+
+  // BIG TITLE
+  sf(11,'bold',[100,50,30]);doc.text('PAGINA 1 DE 2  —  RESUMO EXECUTIVO',M,y+5);
+  sf(8,'normal',SOFT);doc.text('Principais valores da operacao de importacao',M,y+11);
+  y+=17;
+
+  // PRODUTO INFO
+  rct(M,y,CW,7,RED);sf(8,'bold',WHITE);doc.text('IDENTIFICACAO DA OPERACAO',M+3,y+5);y+=9;
+  rct(M,y,CW,6,LIGHT);sf(6,'bold',SOFT);doc.text('PRODUTO',M+3,y+4);sf(6,'normal',INK);doc.text(r.descricao+(r.ncm?' — NCM '+r.ncm:''),M+35,y+4);sf(6,'bold',SOFT);doc.text('FORNECEDOR',M+110,y+4);sf(6,'normal',INK);doc.text(r.fornecedor,M+138,y+4);y+=6;
+  rct(M,y,CW,6,WHITE);sf(6,'bold',SOFT);doc.text('MODAL',M+3,y+4);sf(6,'normal',INK);doc.text(r.modal==='maritimo'?'Maritimo — '+r.containerType:'Aereo',M+35,y+4);sf(6,'bold',SOFT);doc.text('DESTINO',M+110,y+4);sf(6,'normal',INK);doc.text('Estado: '+r.uf,M+138,y+4);y+=6;
+  rct(M,y,CW,6,LIGHT);sf(6,'bold',SOFT);doc.text('EMBARQUE',M+3,y+4);sf(6,'normal',INK);doc.text(r.embarque,M+35,y+4);sf(6,'bold',SOFT);doc.text('CAMBIO USD',M+110,y+4);sf(6,'normal',INK);doc.text('R$ '+fmt(r.cotacao,4)+' (PTAX/BCB '+dateStr+')',M+138,y+4);y+=10;
+
+  // BIG NUMBERS — 4 blocks
+  const blocks=[
+    {label:'CUSTO DA MERCADORIA (FOB)',usd:'US$ '+fmt(r.fob),brl:'R$ '+fmt(r.fob*r.cotacao),sub:'Valor negociado com fornecedor',color:[235,245,255]},
+    {label:'CUSTO DOS IMPOSTOS E TRIBUTOS',usd:'US$ '+fmt(r.totalTrib/r.cotacao),brl:'R$ '+fmt(r.totalTrib),sub:fmt(r.pctTrib,0)+'% sobre o valor CIF',color:[255,235,235]},
+    {label:'DESPESAS ESTIMADAS DE LIBERACAO',usd:'US$ '+fmt(r.totalDesp/r.cotacao),brl:'R$ '+fmt(r.totalDesp),sub:'Despachante, armazenagem, frete interno',color:[255,248,225]},
+    {label:'CUSTO TOTAL NACIONALIZADO',usd:'US$ '+fmt(r.totalUSD),brl:'R$ '+fmt(r.totalBRL),sub:'+'+fmt(r.pctNacional,0)+'% vs FOB  |  '+fmt(r.pctImposto,0)+'% é custo de importação',color:[220,240,225]},
+  ];
+  blocks.forEach((b,i)=>{
+    const bh=i===3?36:30;
+    rct(M,y,CW,bh,b.color);
+    if(i===3){doc.setDrawColor(20,100,40);doc.setLineWidth(1);doc.line(M,y,M,y+bh);}
+    else{doc.setDrawColor(...[192,57,43,35,135,205,180,130,0][i*3],null,[192,57,43,35,135,205,180,130,0][i*3+1],null,[192,57,43,35,135,205,180,130,0][i*3+2]);doc.setLineWidth(0.8);doc.line(M,y,M,y+bh);}
+    sf(7,'bold',SOFT);doc.text(b.label,M+6,y+6);
+    const valColor=i===3?[20,100,40]:i===1?[150,30,20]:INK;
+    sf(22,'bold',valColor);doc.text(b.brl,M+6,y+20);
+    sf(10,'normal',SOFT);doc.text(b.usd,M+6,y+27);
+    sf(6,'normal',SOFT);doc.text(b.sub,W-M-3,y+bh-4,'right');
+    y+=bh+5;
+  });
+  y+=2;
+
+  // PIE-STYLE BAR
+  rct(M,y,CW,8,[240,240,238]);
+  sf(7,'bold',INK);doc.text('Composicao do custo total',M+3,y+5.5);
+  const total3=r.fob*r.cotacao+r.totalTrib+r.totalDesp;
+  const pFob=(r.fob*r.cotacao/total3);const pTrib=(r.totalTrib/total3);const pDesp=(r.totalDesp/total3);
+  sf(6,'normal',SOFT);doc.text('Mercadoria: '+fmt(pFob*100,0)+'%  |  Impostos: '+fmt(pTrib*100,0)+'%  |  Despesas: '+fmt(pDesp*100,0)+'%',W-M-3,y+5.5,'right');
+  y+=8;
+  let bx=M;
+  [[pFob,[35,100,170]],[pTrib,[192,57,43]],[pDesp,[180,130,0]]].forEach(([p,c])=>{
+    const bw=CW*p;rct(bx,y,bw,6,c);bx+=bw;
+  });
+  y+=12;
+
+  // AVISO
+  rct(M,y,CW,12,[248,248,246]);
+  sf(6,'bold',SOFT);doc.text('AVISO LEGAL',M+3,y+5);
+  sf(5,'normal',[120,120,120]);
+  doc.text('Este relatorio e uma estimativa para fins de planejamento. Valores reais variam conforme classificacao fiscal definitiva, regimes tributarios,',M+3,y+9);
+  doc.text('negociacoes comerciais e servicos alfandegarios. Consulte um despachante aduaneiro credenciado antes de tomar decisoes operacionais.',M+3,y+12.5);
+  y+=17;
+
+  // P1 FOOTER
+  rct(0,y,W,10,INK);sf(7,'bold',WHITE);doc.text('CustoChina',M,y+6.5);sf(6,'normal',GOLD);doc.text('Iniciativa de Arthur Guimaraes — Connecting Brazil and China',M+28,y+6.5);sf(6,'normal',[150,150,150]);doc.text('Pagina 1 de 2',W-M,y+6.5,'right');
+
+  // ─── PAGE 2: DETAILED BREAKDOWN ────────────────────────────────────────────
+  doc.addPage();
+  hdr();y=32;
+  sf(11,'bold',[30,60,120]);doc.text('PAGINA 2 DE 2  —  DESCRITIVO COMPLETO DE CUSTOS',M,y+5);
+  sf(8,'normal',SOFT);doc.text('Detalhamento de todos os tributos, despesas e referencias',M,y+11);
+  y+=17;
+
+  // BASE
+  rct(M,y,CW,7,RED);sf(7,'bold',WHITE);doc.text('VALORES DA BASE DE CALCULO (CIF)',M+3,y+5);y+=9;
+  const colW=[CW*.5,CW*.25,CW*.25];
+  rct(M,y,CW,5,[238,232,226]);sf(6,'bold',SOFT);doc.text('ITEM',M+3,y+3.5);doc.text('USD',M+colW[0]+colW[1]-2,y+3.5,'right');doc.text('R$',M+colW[0]+colW[1]+colW[2]-2,y+3.5,'right');y+=5;
+  [['Valor FOB',r.fob,r.fob*r.cotacao],['Frete Internacional',r.frete,r.frete*r.cotacao],['Seguro '+(r.seguroAuto?'(est. 0,4% FOB)':'(informado)'),r.seguro,r.seguro*r.cotacao],['CIF — Base de calculo',r.cif,r.cifBRL]].forEach((row,i)=>{
+    const last=i===3;rct(M,y,CW,5.5,last?[245,245,218]:i%2===0?LIGHT:WHITE);
+    sf(6,last?'bold':'normal',INK);doc.text(row[0],M+3,y+3.8);doc.text('US$ '+fmt(row[1]),M+colW[0]+colW[1]-2,y+3.8,'right');doc.text('R$ '+fmt(row[2]),M+colW[0]+colW[1]+colW[2]-2,y+3.8,'right');y+=5.5;
+  });y+=3;
+
+  // TRIBUTOS
+  rct(M,y,CW,7,RED);sf(7,'bold',WHITE);doc.text('CALCULO DOS TRIBUTOS',M+3,y+5);y+=9;
+  rct(M,y,CW,5,[238,232,226]);sf(5,'bold',SOFT);doc.text('TRIBUTO',M+3,y+3.5);doc.text('ALIQUOTA',M+70,y+3.5);doc.text('R$',M+102,y+3.5);doc.text('USD',M+124,y+3.5);doc.text('FONTE',M+146,y+3.5);y+=5;
+  [['II — Imposto de Importacao',fmt(r.aliqII*100,0)+'% s/ CIF BRL','R$ '+fmt(r.II),'US$ '+fmt(r.II/r.cotacao),'Receita Federal / TEC'],
+   ['IPI',fmt(r.aliqIPI*100,1)+'% s/ CIF+II','R$ '+fmt(r.IPI),'US$ '+fmt(r.IPI/r.cotacao),'Receita Federal'],
+   ['PIS-Importacao','2,10% s/ CIF BRL','R$ '+fmt(r.PIS),'US$ '+fmt(r.PIS/r.cotacao),'Lei 10.865/2004'],
+   ['COFINS-Importacao','9,65% s/ CIF BRL','R$ '+fmt(r.COFINS),'US$ '+fmt(r.COFINS/r.cotacao),'Lei 10.865/2004'],
+   ['ICMS — '+r.uf,fmt(r.icmsAliq*100,1)+'% por dentro','R$ '+fmt(r.ICMS),'US$ '+fmt(r.ICMS/r.cotacao),'CONFAZ / RICMS'],
+   ['AFRMM',r.modal==='maritimo'?'8% s/ frete':'N/A - aereo','R$ '+fmt(r.AFRMM),'US$ '+fmt(r.AFRMM/r.cotacao),'Lei 10.893/2004'],
+   ['Taxa SISCOMEX','R$ 214,50 fixo por DI','R$ '+fmt(r.SISCOMEX),'US$ '+fmt(r.SISCOMEX/r.cotacao),'Portaria MF 257/2011'],
+  ].forEach((row,i)=>{
+    if(i%2===0)rct(M,y,CW,5.5,LIGHT);
+    sf(5,'normal',INK);doc.text(row[0],M+3,y+3.8);sf(5,'normal',SOFT);doc.text(row[1],M+70,y+3.8);sf(5,'bold',INK);doc.text(row[2],M+102,y+3.8);sf(5,'normal',INK);doc.text(row[3],M+124,y+3.8);sf(5,'normal',[100,100,180]);doc.text(row[4],M+146,y+3.8);y+=5.5;
+  });
+  rct(M,y,CW,6,[235,215,215]);sf(6,'bold',RED);doc.text('TOTAL DE TRIBUTOS',M+3,y+4.2);doc.text('R$ '+fmt(r.totalTrib),M+102,y+4.2);sf(6,'normal',[150,50,30]);doc.text('US$ '+fmt(r.totalTrib/r.cotacao),M+124,y+4.2);y+=10;
+
+  // DESPESAS
+  rct(M,y,CW,7,INK);sf(7,'bold',WHITE);doc.text('DESPESAS ESTIMADAS DE LIBERACAO',M+3,y+5);sf(5,'normal',[180,180,180]);doc.text('* Estimativas de mercado — variam por operacao',W-M,y+5,'right');y+=9;
+  rct(M,y,CW,5,[238,232,226]);sf(5,'bold',SOFT);doc.text('DESPESA',M+3,y+3.5);doc.text('BASE',M+90,y+3.5);doc.text('R$',M+130,y+3.5,'right');doc.text('REF.',M+132,y+3.5);y+=5;
+  const desps=[['SDA / Honorarios Despachante','~0,5% CIF + fixo','R$ '+fmt(r.SDA),'Sindasp'],['Armazenagem portuaria','~0,3% CIF + fixo','R$ '+fmt(r.armazenagem),'Media mercado']];
+  if(r.modal==='maritimo')desps.push(['THC / Taxas de Destino','~0,4% CIF + fixo','R$ '+fmt(r.THC),'Terminal portuario']);
+  desps.push(['Frete rodoviario interno','~0,8% CIF + fixo','R$ '+fmt(r.freteInterno),'Media mercado']);
+  desps.forEach((row,i)=>{
+    if(i%2===0)rct(M,y,CW,5.5,LIGHT);
+    sf(5,'normal',INK);doc.text(row[0],M+3,y+3.8);sf(5,'normal',SOFT);doc.text(row[1],M+90,y+3.8);sf(5,'bold',[150,100,0]);doc.text(row[2],M+130,y+3.8,'right');sf(5,'normal',[100,100,180]);doc.text(row[3],M+132,y+3.8);y+=5.5;
+  });
+  rct(M,y,CW,6,[245,238,218]);sf(6,'bold',[150,100,0]);doc.text('TOTAL ESTIMADO DESPESAS',M+3,y+4.2);doc.text('R$ '+fmt(r.totalDesp),M+130,y+4.2,'right');y+=10;
+
+  // FRETE REF
+  rct(M,y,CW,7,[50,50,50]);sf(7,'bold',WHITE);doc.text('REFERENCIA DE FRETE — CHINA PARA O BRASIL 40GP (+10-15% margem de seguranca)',M+3,y+5);y+=9;
+  rct(M,y,CW,5,[238,232,226]);sf(5,'bold',SOFT);doc.text('PERIODO',M+3,y+3.5);doc.text('FRETE MERCADO',M+50,y+3.5);doc.text('C/ MARGEM (+12%)',M+100,y+3.5);doc.text('FONTE',M+148,y+3.5);y+=5;
+  [['Out/2023','US$ 1.342','US$ 1.503','Drewry'],['Jan/2024','US$ 2.490','US$ 2.789','Cheap2Ship'],['Nov/2024 (pico)','US$ 11.843','US$ 13.264','Logcomex'],['Mar/2026 (atual)','US$ 2.520–3.080','US$ 2.822–3.450','Sino-Shipping']].forEach((row,i)=>{
+    if(i%2===0)rct(M,y,CW,5.5,LIGHT);
+    sf(5,'normal',INK);doc.text(row[0],M+3,y+3.8);sf(5,'bold',INK);doc.text(row[1],M+50,y+3.8);sf(5,'bold',[20,100,60]);doc.text(row[2],M+100,y+3.8);sf(5,'normal',[100,100,180]);doc.text(row[3],M+148,y+3.8);y+=5.5;
+  });y+=3;
+
+  // FONTES
+  rct(M,y,CW,7,[40,40,40]);sf(7,'bold',WHITE);doc.text('FONTES DOS DADOS',M+3,y+5);y+=9;
+  [['Cotacao USD/BRL','AWESOMEapi (PTAX - Banco Central do Brasil) — economia.awesomeapi.com.br'],
+   ['II e IPI','Tabela TIPI / TEC — Receita Federal — www.gov.br/receitafederal'],
+   ['PIS / COFINS','Lei 10.865/2004 — aliquotas 2,10% e 9,65%'],
+   ['Seguro Internacional','Estimativa 0,4% do FOB — media de mercado (SUSEP)'],
+   ['ICMS','Legislacoes estaduais vigentes / CONFAZ — www.confaz.fazenda.gov.br'],
+   ['AFRMM / SISCOMEX','Lei 10.893/2004 e Portaria MF 257/2011'],
+   ['Frete China-Brasil','Drewry, Logcomex, Bloomberg Linea, Sino-Shipping (com margem +10-15%)'],
+   ['Predicao NCM','Inteligencia artificial Claude (Anthropic) — sempre confirme com despachante'],
+  ].forEach((f,i)=>{
+    if(i%2===0)rct(M,y,CW,5.5,LIGHT);
+    sf(5,'bold',SOFT);doc.text(f[0].toUpperCase(),M+3,y+3.8);sf(5,'normal',INK);doc.text(f[1],M+42,y+3.8);y+=5.5;
+  });y+=3;
+
+  // P2 FOOTER
+  const fy=Math.min(y+2,282);
+  rct(0,fy,W,10,INK);sf(7,'bold',WHITE);doc.text('CustoChina',M,fy+6.5);sf(6,'normal',GOLD);doc.text('Iniciativa de Arthur Guimaraes — Connecting Brazil and China',M+28,fy+6.5);sf(6,'normal',[150,150,150]);doc.text('Pagina 2 de 2',W-M,fy+6.5,'right');
+
+  doc.save('CustoChina_Relatorio_'+dateStr.replace(/\//g,'-')+'.pdf');
+}
+
+
+function enviarCadastro(){
+  const nome=document.getElementById('cad-nome').value.trim();
+  const email=document.getElementById('cad-email').value.trim();
+  const empresa=document.getElementById('cad-empresa').value.trim();
+  const msg=document.getElementById('cad-msg');
+  if(!nome||!email){msg.textContent='Preencha nome e e-mail para continuar.';msg.style.color='#C0392B';return;}
+  // MVP: envia para LinkedIn — futuramente integrar com backend/Mailchimp
+  msg.textContent='✓ Cadastro recebido! Entrando em contato em breve...';
+  msg.style.color='#1A7A4A';
+  setTimeout(()=>{
+    window.open('https://www.linkedin.com/in/arthur-guimaraes/?subject=Teste+grátis+CustoChina&body=Nome:+'+encodeURIComponent(nome)+'%0AEmail:+'+encodeURIComponent(email)+'%0AEmpresa:+'+encodeURIComponent(empresa),'_blank');
+  },800);
+}
+
+function irParaPagamento(plano){
+  const msgs={'pacote10':'Pacote 10 simulações — R$ 49','pacote30':'Pacote 30 simulações — R$ 119'};
+  window.open('https://www.linkedin.com/in/arthur-guimaraes/?subject=Compra+'+encodeURIComponent(msgs[plano]||plano),'_blank');
+}
+
+
+// DEV MODE — token gate disabled
+localStorage.setItem('cc_paid_user','true');
+function updateCreditsUI(){}
+function checkGateOnLoad(){}
+function fecharGate(){}
+function validarToken(){}
+
+
+// ── FRETE TABS ────────────────────────────────────────────────────────────────
+function showFreteTab(tab){
+  document.getElementById('frete-tab-maritimo').style.display = tab==='maritimo'?'block':'none';
+  document.getElementById('frete-tab-aereo').style.display    = tab==='aereo'?'block':'none';
+  const tM=document.getElementById('tab-maritimo');
+  const tA=document.getElementById('tab-aereo');
+  if(tM&&tA){
+    tM.style.background = tab==='maritimo'?'var(--ink)':'var(--surface)';
+    tM.style.color      = tab==='maritimo'?'#fff':'var(--ink-mid)';
+    tA.style.background = tab==='aereo'?'var(--ink)':'var(--surface)';
+    tA.style.color      = tab==='aereo'?'#fff':'var(--ink-mid)';
+  }
+  // Auto-switch modal selector in simulator if user clicks tab
+  const modalSel=document.getElementById('modal');
+  if(modalSel){ modalSel.value=tab; onModalChange(); }
+}
+
+// Sync simulator modal toggle with frete section tabs
+function onModalChange(){
+  const modal=document.getElementById('modal').value;
+  document.getElementById('container-block').style.display=modal==='maritimo'?'block':'none';
+  // sync frete tabs if visible
+  const tM=document.getElementById('tab-maritimo');
+  if(tM){ showFreteTab(modal); }
+}
+
+// ── SCROLL ANIMATIONS ─────────────────────────────────────────────────────────
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:0.08});
+document.querySelectorAll('.fade-up').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
